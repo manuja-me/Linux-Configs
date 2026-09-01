@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=HyprCat
+Comment=An intelligent dynamic tiling Wayland compositor
+Exec=run-hyprland-cat
+Type=Application
+DesktopNames=HyprCat
+Keywords=tiling;wayland;compositor;

@@ -1,0 +1,14 @@
+## Copyright (C) 2020-2025 Aditya Shakya <adi1090x@gmail.com>
+
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = archcraft-hyprland
+Target = hyprland
+Target = hyprland-git
+
+[Action]
+Description = Modifying Hyprland Desktop file...
+When = PostTransaction
+Exec = /usr/bin/sed -i -e 's/Exec=.*/Exec=run-hyprland/g' /usr/share/wayland-sessions/hyprland.desktop

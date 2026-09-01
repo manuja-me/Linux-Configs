@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
+##
+## Waybar ---------------------------------------------------
+
+CONFIG="$HOME/.config/hyprcat/waybar/config"
+STYLE="$HOME/.config/hyprcat/waybar/style.css"
+
+if [[ ! `pidof waybar` ]]; then
+	waybar --bar main-bar --log-level error --config ${CONFIG} --style ${STYLE}
+fi
