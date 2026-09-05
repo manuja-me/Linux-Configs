@@ -15,6 +15,7 @@ A multi-distribution configuration repository containing declarative system conf
 │   ├── misc/                 # System session launchers & Pacman hooks
 │   ├── screenshots/          # Showcase screenshots
 │   ├── install.sh            # 1-Click Automated Setup Script
+│   ├── setup-antigravity.sh  # 1-Click Google Antigravity & AI Agent Setup
 │   └── README.md             # Complete step-by-step installation & tinkering guide
 │
 ├── nixos/                    # NixOS Flakes & Home Manager Declarative Configurations
@@ -46,13 +47,24 @@ Transforms a barebone Arch Linux installation into a fully configured, aesthetic
 
 **To install on Arch Linux:**
 ```bash
-git clone https://github.com/manuja-me/nixos-config.git ~/linux-configs
+git clone https://github.com/manuja-me/Linux-Configs.git ~/linux-configs
 cd ~/linux-configs/arch
 chmod +x install.sh
 ./install.sh
 ```
 
 👉 See the [Arch Linux Rice Guide](arch/README.md) for keybindings, manual steps, and custom tinkering instructions.
+
+---
+
+### 🤖 [Google Antigravity Setup (`arch/setup-antigravity.sh`)](arch/README.md#google-antigravity-setup)
+1-click environment setup replicating the Google Antigravity developer workspace, including `claude-mem` MCP & lifecycle hooks, `headroom` context compression layer, `task-observer` continuous learning skill, `specify-cli`, and custom plugins/orchestration rules.
+
+```bash
+cd ~/linux-configs/arch
+chmod +x setup-antigravity.sh
+./setup-antigravity.sh
+```
 
 ---
 

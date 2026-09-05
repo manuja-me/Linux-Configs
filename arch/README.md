@@ -398,3 +398,43 @@ If OBS Studio or Discord cannot share screen:
 systemctl --user restart xdg-desktop-portal-hyprland xdg-desktop-portal
 ```
 Make sure only `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk` are installed (avoid running `xdg-desktop-portal-gnome` or `xdg-desktop-portal-wlr` alongside it).
+
+---
+
+## 🤖 Google Antigravity & AI Agent Setup
+
+To configure an identical **Google Antigravity** environment on your Arch Linux system—complete with integrated memory recall, context optimization, skills, and plugins—use the included automated script:
+
+```bash
+chmod +x setup-antigravity.sh
+./setup-antigravity.sh
+```
+
+### Components Provisioned:
+1. **Antigravity Tooling**: Installs `antigravity-cli` (`agy`) and `antigravity-ide` via AUR / official installer.
+2. **Memory Engine (`claude-mem`)**:
+   - Clones and builds `thedotmack/claude-mem` runtime via Bun.
+   - Registers Stdio MCP server (`mcp-server.cjs`).
+   - Hooks lifecycle events (`SessionStart`, `BeforeAgent`, `AfterAgent`, `BeforeTool`, `AfterTool`, `Notification`, `PreCompress`).
+3. **Context Optimization Layer (`headroom`)**:
+   - Installs `headroom-ai` and exposes `headroom mcp serve` via MCP.
+4. **Skills & Orchestration (`task-observer` & `speckit`)**:
+   - Installs `rebelytics/one-skill-to-rule-them-all` into `~/.gemini/config/skills/task-observer`.
+   - Initializes `~/.gemini/skill-observations/` and registers global `skills.json`.
+   - Provisions `specify-cli` for spec-driven workflows.
+5. **Rules & Plugins**:
+   - Writes `~/.gemini/GEMINI.md` enforcing the Autonomous Tool Orchestration Protocol.
+   - Enables `chrome-devtools-plugin`, `google-antigravity-sdk`, and `modern-web-guidance-plugin`.
+   - Sets dark theme, eager execution policy, and permission grants.
+
+### Verification:
+```bash
+agy mcp list
+```
+Expected output:
+```text
+NAME        TYPE   STATUS   COMMAND/URL
+claude-mem  stdio  enabled  node /home/<user>/.claude/plugins/marketplaces/thedotmack/plugin/scripts/mcp-server.cjs
+headroom    stdio  enabled  headroom mcp serve
+```
+
