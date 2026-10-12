@@ -16,25 +16,49 @@ This guide walks you through transforming a **fresh barebone Arch Linux installa
 | **Lock Screen & Idle** | `hyprlock` & `hypridle` | Fast, styled Wayland lock screen with blurred wallpaper |
 | **Session Control** | `wlogout` | Aesthetic logout / lock / shutdown / reboot splash menu |
 | **Dynamic Theming** | `pastel` + `python-pywal` + custom `theme.sh` | On-the-fly theme switching (Dark, Light, Catppuccin, Pywal wallpaper-adaptive) |
-| **Display Manager** | `sddm` + `sddm-astronaut-theme` | Modern animated login screen with virtual keyboard support |
-| **GTK & Icons** | `Manhattan` / `Catppuccin-Mocha`, `Luv-Folders-Dark`, `Qogirr-Dark` | Unified dark/light theme consistency across GTK3, GTK4, and Qt apps |
+| **Display Manager & Boot** | `sddm` (`corners` / `sddm-astronaut-theme`) + `grub` (`Elegant-wave-window-right-dark`) | Custom Catppuccin Mocha SDDM login & themed GRUB2 dual-boot menu |
+| **GTK, Qt & Icons** | `Manhattan` / `Catppuccin-Mocha`, `Luv-Folders-Dark`, `Qogirr-Dark`, `qt5ct` | Unified dark/light theme consistency across GTK2/3/4 and Qt apps |
+| **Shell & TUI Suite** | `zsh` (`Oh-My-Zsh`), `neovim` (`LazyVim`), `yazi`, `btop`, `cava`, `fastfetch`, `zathura` | Full terminal productivity and media workflow |
 
 ---
 
-## ⚡ Quick Start: 1-Click Automated Rice Deployment
+## ⚡ Quick Start: 1-Command TTY Cloud Bootstrap (`curl | bash`)
 
-Both `/home/user/install_hyprland_rice.sh` and [install.sh](file:///home/user/Downloads/hyprlandConfig/install.sh) have been created.
-
-When installing on your new Arch machine:
+From a **fresh minimal Arch Linux TTY** (logged in as `root` or your user with network connected):
 
 ```bash
-# 1. Copy or clone your hyprlandConfig folder to your new system
-cd ~/Downloads/hyprlandConfig
-
-# 2. Make the installer executable & run it
-chmod +x install.sh
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash
 ```
+
+### Order of Execution on a Fresh Minimal Arch Build:
+1. **Install Minimal Base Arch**: Boot Arch ISO → run `archinstall` (select `Minimal` profile, `NetworkManager`, `grub` bootloader) → reboot into fresh TTY.
+2. **Connect Network (if using Wi-Fi)**: Run `nmtui` or `nmcli device wifi connect <SSID> password <PASS>`.
+3. **Run Cloud Bootstrap Command**: Execute the `curl ... | bash` command above.
+   - `bootstrap.sh` attaches `/dev/tty` for interactive password/prompt input, installs `git`, `base-devel`, `curl`, `sudo`, `rsync`, clones `manuja-me/nixos-config` into `~/nixos-config`, and launches `arch/install.sh`.
+4. **Answer Interactive Prompts & Sudo Password**:
+   - **Target Username**: Uses your current user or creates a new user account (`wheel`, `video`, `input` groups + sudo access). Prompts for your `sudo` (or `root` via `su`) password whenever privileges are needed along the way.
+   - **GPU Drivers**: Choose `1) Intel`, `2) AMD`, `3) NVIDIA`, or `4) VM/Skip`.
+   - **SDDM & GRUB Themes**: Choose `Corners` (Catppuccin Mocha) or `Astronaut`, and toggle the `Elegant-wave-window-right-dark` GRUB theme.
+   - **Optional Feature Bundles**: Toggle Shell/TUI (`zsh`, `nvim`/LazyVim, `yazi`, `btop`, `cava`), Media (`spotify`, `spicetify`, `easyeffects`, `mpv`), Extra Desktop Apps (`firefox`, `chromium`, `localsend`, `timeshift`), KVM/QEMU Virtualization, and Google Antigravity AI Suite.
+5. **Automatic Verbose Execution & Error Diagnostics**:
+   - All scripts (`bootstrap.sh`, `install.sh`, `restore.sh`) run in **automatic verbose mode (`set -x`)**, printing every command with `[script:function:line]` prefixes in real time and streaming full output to `/tmp/arch-hypr-install-<timestamp>.log`.
+   - If any step fails, an `ERR` trap immediately prints the exact failing function, line number, exit code, failed command, log path, and rollback command (`./restore.sh`).
+6. **Reboot**: Run `sudo reboot` to boot directly into themed GRUB → SDDM → Hyprland.
+
+> **Unattended Mode**: To skip all prompts and install everything with default live-system settings:
+> ```bash
+> curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash -s -- --defaults
+> ```
+
+---
+
+## 🔄 Rollback, Clean Arch Slate & Live Sync Utilities
+
+| Script | Command | Description |
+| :--- | :--- | :--- |
+| **Restore / Clean Slate** | `./restore.sh` | Interactive recovery tool (logged to `/tmp/arch-hypr-restore-<timestamp>.log`): **Mode 1** restores any pre-install snapshot from `~/.config-backups/`; **Mode 2** wipes all rice configs, hooks, SDDM/GRUB themes, and optionally purges desktop packages back to a **Clean Arch Slate**. |
+| **Sync Live Changes** | `./sync-from-live.sh` | Copies your latest live `~/.config/*`, `~/.zshrc`, SDDM, and GRUB themes back into `arch/` so you can commit and push updates to GitHub. |
+| **Bootloader Recovery** | `sudo ./boot-recovery/recover-boot.sh` | Run from an Arch Live USB to repair EFI/GRUB & Windows dual-boot entries. |
 
 ---
 
@@ -117,10 +141,10 @@ yay -S --needed wlogout sddm-astronaut-theme
 
 ### Step 4: Installing Fonts, GTK Themes, Icons & Cursors
 
-Navigate to your `hyprlandConfig` directory:
+Navigate to your `arch/` directory inside the cloned repo:
 
 ```bash
-SRC="$HOME/Downloads/hyprlandConfig"
+SRC="$HOME/nixos-config/arch"
 
 # 1. Fonts
 mkdir -p ~/.local/share/fonts
@@ -179,66 +203,45 @@ opacity = 1.0
 style = { shape = "Block", blinking = "On" }
 EOF
 
-# 3. App configs (GTK3 CSS, Ncmpcpp, Ranger, Geany)
-mkdir -p ~/.config/gtk-3.0 ~/.config/geany ~/.config/ncmpcpp ~/.config/ranger
-cp -f "$SRC/misc/gtk-3.0/gtk.css" ~/.config/gtk-3.0/ 2>/dev/null || true
-cp -rf "$SRC/misc/geany"/* ~/.config/geany/ 2>/dev/null || true
-cp -rf "$SRC/misc/ncmpcpp"/* ~/.config/ncmpcpp/ 2>/dev/null || true
-cp -rf "$SRC/misc/ranger"/* ~/.config/ranger/ 2>/dev/null || true
+# 3. Editor, TUI & Desktop App Configs (LazyVim/nvim, yazi, btop, cava, mpv, qt5ct, spicetify, Thunar, viewnior, xarchiver, fontconfig)
+for app in nvim yazi btop cava mpv qt5ct spicetify Thunar viewnior xarchiver fontconfig; do
+    mkdir -p ~/.config/"$app"
+    cp -rf "$SRC/dotfiles/$app"/. ~/.config/"$app"/
+done
 
-# 4. Default Environment Variables
+# 4. Zsh & Oh-My-Zsh Config
+cp -f "$SRC/dotfiles/zsh/.zshrc" ~/.zshrc
+cp -f "$SRC/dotfiles/zsh/.zprofile" ~/.zprofile 2>/dev/null || true
+
+# 5. Misc App Configs (GTK2/3, Ncmpcpp, Ranger, Geany, MIME defaults)
+mkdir -p ~/.config/gtk-3.0 ~/.config/geany ~/.config/ncmpcpp ~/.config/ranger
+cp -f "$SRC/misc/.gtkrc-2.0" ~/.gtkrc-2.0
+cp -f "$SRC/misc/gtk-3.0/gtk.css" ~/.config/gtk-3.0/
+cp -f "$SRC/misc/gtk-3.0/settings.ini" ~/.config/gtk-3.0/
+cp -f "$SRC/misc/xdg-terminals.list" ~/.config/
+cp -f "$SRC/misc/mimeapps.list" ~/.config/
+cp -rf "$SRC/misc/geany"/* ~/.config/geany/
+cp -rf "$SRC/misc/ncmpcpp"/* ~/.config/ncmpcpp/
+cp -rf "$SRC/misc/ranger"/* ~/.config/ranger/
+
+# 6. Default Environment Variables
 mkdir -p ~/.config/environment.d
 cat > ~/.config/environment.d/10-terminal.conf << 'EOF'
 TERMINAL=kitty
 BROWSER=firefox
 EDITOR=nvim
 VISUAL=nvim
+QT_QPA_PLATFORMTHEME=qt5ct
+QT_STYLE_OVERRIDE=Fusion
 EOF
 
 # Make all scripts executable
-chmod +x ~/.config/hypr/scripts/* ~/.config/hyprcat/scripts/* ~/.config/hypr/theme/theme.sh ~/.config/hyprcat/theme/theme.sh
+chmod +x ~/.config/hypr/scripts/* ~/.config/hyprcat/scripts/* ~/.config/hypr/theme/theme.sh ~/.config/hyprcat/theme/theme.sh ~/.config/hypr/waybar/lightmode
 ```
 
 ---
 
-### Step 6: Critical Modern Hyprland Compatibility Fixes
-
-The raw bundle contains older configuration syntax that causes errors on modern Hyprland versions. Apply these exact fixes:
-
-#### 6.1 Clean Obsolete Options in `~/.config/hypr/config.d/`
-```bash
-# In 02-decoration.conf: Remove deprecated 'ignore_window'
-sed -i '/ignore_window[[:space:]]*=[[:space:]]*true/d' ~/.config/hypr/config.d/02-decoration.conf
-
-# In 09-misc.conf: Remove deprecated 'vfr' and 'cm_fs_passthrough'
-sed -i '/vfr[[:space:]]*=[[:space:]]*true/d' ~/.config/hypr/config.d/09-misc.conf
-sed -i '/cm_fs_passthrough/d' ~/.config/hypr/config.d/09-misc.conf
-
-# In 30-layout-dwindle.conf: Remove deprecated 'pseudotile' and obsolete aspect ratio
-sed -i '/pseudotile/d' ~/.config/hypr/config.d/30-layout-dwindle.conf
-sed -i '/single_window_aspect_ratio/d' ~/.config/hypr/config.d/30-layout-dwindle.conf
-```
-
-#### 6.2 Fix Rofi Menus Toggle Behavior
-By default, running a rofi launcher while one is open causes an error or stays stuck. Adding a toggle check allows hotkeys to toggle the menu smoothly:
-
-```bash
-for script in ~/.config/hypr/scripts/rofi_*; do
-    if ! grep -q 'pgrep -x "rofi"' "$script"; then
-        sed -i '2i\
-# Toggle rofi if already open\
-if pgrep -x "rofi" >/dev/null; then\
-\tpkill -x "rofi"\
-\texit 0\
-fi\
-' "$script"
-    fi
-done
-```
-
----
-
-### Step 7: System Session Launchers & Pacman Hooks
+### Step 6: System Session Launchers & Pacman Hooks
 
 This sets up Wayland session files so your display manager (SDDM) can properly launch Hyprland with all environment variables loaded.
 
@@ -270,18 +273,18 @@ sudo cp -f "$SRC/misc/archcraft-hook-hyprland-uwsm.hook" /etc/pacman.d/hooks/
 
 ---
 
-### Step 8: Configure SDDM Display Manager
+### Step 7: Configure SDDM Display Manager & GRUB2 Theme
 
-Configure SDDM to use the `sddm-astronaut-theme` with virtual keyboard support:
+Configure SDDM with the custom Catppuccin Mocha `corners` theme (or `sddm-astronaut-theme`) and install the `Elegant-wave-window-right-dark` GRUB2 theme:
 
 ```bash
-sudo mkdir -p /etc/sddm.conf.d
+# 1. SDDM Corners Theme
+sudo mkdir -p /usr/share/sddm/themes/corners /etc/sddm.conf.d
+sudo cp -rf "$SRC/themes/sddm/corners"/. /usr/share/sddm/themes/corners/
 
 sudo tee /etc/sddm.conf > /dev/null << 'EOF'
 [Theme]
-    Current=sddm-astronaut-theme
-[General]
-    InputMethod=qtvirtualkeyboard
+    Current=corners
 EOF
 
 sudo tee /etc/sddm.conf.d/virtualkbd.conf > /dev/null << 'EOF'
@@ -290,16 +293,18 @@ sudo tee /etc/sddm.conf.d/virtualkbd.conf > /dev/null << 'EOF'
 EOF
 
 sudo systemctl enable sddm.service
+
+# 2. Elegant GRUB2 Bootloader Theme
+sudo mkdir -p /boot/grub/themes/Elegant-wave-window-right-dark
+sudo cp -rf "$SRC/themes/grub/Elegant-wave-window-right-dark"/. /boot/grub/themes/Elegant-wave-window-right-dark/
+sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ---
 
-### Step 9: Initialize Theme & Apply GTK Settings
+### Step 8: Initialize Theme & Apply GTK Settings
 
 ```bash
-# Apply Default Theme
-bash ~/.config/hypr/theme/theme.sh --default
-
 # Set initial GTK settings
 gsettings set org.gnome.desktop.interface gtk-theme 'Manhattan'
 gsettings set org.gnome.desktop.interface icon-theme 'Luv-Folders-Dark'
@@ -319,23 +324,29 @@ gsettings set org.gnome.desktop.wm.preferences button-layout ":"
 | `Super + Alt + Return` | Open Fullscreen Terminal (`kitty -F`) |
 | `Super` or `Super + D` or `Alt + F1` | Open App Launcher (`rofi`) |
 | `Alt + F2` | Open Command Runner (`rofi`) |
+| `Super + V` | Open Clipboard History (`rofi_clipboard` + `cliphist`) |
+| `Super + R` | Open Run-as-Root App Menu (`rofi_asroot`) |
+| `Super + M` | Open Music / Spotify Menu (`rofi_spotify`) |
 | `Super + Shift + F` | Open File Manager (`thunar`) |
 | `Super + Shift + E` | Open Text Editor (`geany`) |
 | `Super + Shift + W` | Open Web Browser (`firefox`) |
-| `Super + X` | Open Power Menu (`rofi`) |
-| `Super + S` | Open Screenshot Menu (`rofi`) |
-| `Super + N` | Open WiFi / Network Menu (`rofi`) |
-| `Super + B` | Open Bluetooth Menu (`rofi`) |
+| `Super + X` | Open Power Menu (`rofi_powermenu`) |
+| `Super + S` | Open Screenshot Menu (`rofi_screenshot`) |
+| `Super + N` | Open WiFi / Network Menu (`rofi_network`) |
+| `Super + B` | Open Bluetooth Menu (`rofi_bluetooth`) |
+| `Super + F5` or `XF86Launch3/4` | Cycle Power Profile (`power-saver` / `balanced` / `performance`) |
 | `Super + P` | Color Picker (`hyprpicker`) |
+| `Super + Shift + P` | Pin Floating Window Across Workspaces |
 | `Super + C` | Close Active Window |
 | `Super + Q` | Force Kill Active Window |
-| `Super + Space` | Toggle Window Floating |
+| `Super + Space` | Toggle Window Floating & Center |
 | `Super + F` | Toggle Window Fullscreen |
 | `Super + 1..9` | Switch to Workspace 1–9 |
 | `Super + Shift + 1..9` | Move Active Window to Workspace 1–9 |
 | `Ctrl + Alt + L` | Lock Screen (`hyprlock`) |
-| `Print` | Instant Screenshot |
-| `Super + Print` | Select Area Screenshot |
+| `Print` | Select Area Screenshot |
+| `Super + Print` | Instant Fullscreen Screenshot |
+| `Ctrl + Print` | Active Window Screenshot |
 | `XF86AudioRaiseVolume / LowerVolume` | Raise / Lower Volume (with Mako OSD) |
 | `XF86MonBrightnessUp / Down` | Raise / Lower Screen Brightness (with Mako OSD) |
 
@@ -437,4 +448,24 @@ NAME        TYPE   STATUS   COMMAND/URL
 claude-mem  stdio  enabled  node /home/<user>/.claude/plugins/marketplaces/thedotmack/plugin/scripts/mcp-server.cjs
 headroom    stdio  enabled  headroom mcp serve
 ```
+
+---
+
+## 🛡️ Bootloader Recovery (`boot-recovery/recover-boot.sh`)
+
+Automated emergency GRUB EFI bootloader restoration script for this machine (dual-boot Arch on NVMe + Windows NVMe).
+
+### Usage (from Arch Live USB as root):
+```bash
+chmod +x boot-recovery/recover-boot.sh
+./boot-recovery/recover-boot.sh
+```
+
+### What it does:
+- Validates UEFI boot environment and checks partition block devices by UUID.
+- Backs up existing `/etc/default/grub`, `grub.cfg`, and `efibootmgr` state with timestamps.
+- Mounts root and `/boot` ESP partitions, chroots into system.
+- Ensures `GRUB_DISABLE_OS_PROBER=false` is configured and rebuilds `mkinitcpio -P`.
+- Runs `grub-install` (UEFI target + `--removable` fallback) and `grub-mkconfig`.
+- Restores GRUB to the top priority in `efibootmgr` firmware boot order.
 

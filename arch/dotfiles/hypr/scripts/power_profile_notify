@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+## Monitor power-profiles-daemon via D-Bus and notify via mako
+
+notify_profile() {
+	case "$1" in
+		power-saver)
+			notify-send -h string:x-canonical-private-synchronous:sys-notify-power -u low "Power Profile" "Quiet (Silent Fan)"
+			;;
+		balanced)
+			notify-send -h string:x-canonical-private-synchronous:sys-notify-power -u low "Power Profile" "Balanced"
+			;;
+		performance)
+			notify-send -h string:x-canonical-private-synchronous:sys-notify-power -u low "Power Profile" "Performance (Turbo)"
+			;;
+	esac
+}
+
+gdbus monitor --system --dest net.hadess.PowerProfiles --object-path /net/hadess/PowerProfiles | while read -r line; do
+	case "$line" in
+		*"ActiveProfile': <'power-saver'>"*) notify_profile "power-saver" ;;
+		*"ActiveProfile': <'balanced'>"*)    notify_profile "balanced" ;;
+		*"ActiveProfile': <'performance'>"*) notify_profile "performance" ;;
+	esac
+done

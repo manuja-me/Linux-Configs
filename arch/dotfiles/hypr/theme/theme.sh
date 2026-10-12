@@ -30,6 +30,7 @@ fi
 
 ## Default Theme
 source_default() {
+	echo "dark" > "$DIR/theme/.mode_state"
 	cat ${DEFAULT_THEME} > ${CURRENT_THEME}
 	source ${CURRENT_THEME}
 	altbackground="`pastel color $background | pastel lighten 0.10 | pastel format hex`"
@@ -41,6 +42,7 @@ source_default() {
 
 ## Light Theme
 source_light() {
+	echo "light" > "$DIR/theme/.mode_state"
 	cat ${LIGHT_THEME} > ${CURRENT_THEME}
 	source ${CURRENT_THEME}
 	altbackground="`pastel color $background | pastel darken 0.12 | pastel format hex`"
@@ -93,14 +95,25 @@ source_pywal() {
 	altforeground="`pastel color $foreground | pastel darken 0.30 | pastel format hex`"
 	modbackground=(`pastel gradient -n 3 $background $altbackground | pastel format hex`)
 	accent="$color4"
+	echo "dark" > "$DIR/theme/.mode_state"
+	gtk_theme="${gtk_theme:-Manhattan}"
+	gtk_icons="${gtk_icons:-Luv-Folders-Dark}"
+	gtk_font="${gtk_font:-Noto Sans 9}"
+	cursor_theme="${cursor_theme:-Qogirr-Dark}"
+	color_scheme='prefer-dark'
+	prefer_dark='1'
+	prefer_dark_bool='true'
+	qt_color_scheme='/usr/share/qt5ct/colors/darker.conf'
+	kde_color_scheme='BreezeDark'
+	kde_name='Breeze Dark'
 }
 
 ## Wallpaper ---------------------------------
 apply_wallpaper() {
 	sed -i -e "s|\$wallpaper =.*|\$wallpaper = $wallpaper|g" ${DIR}/hyprpaper.conf
 
-	hyprctl hyprpaper preload "$wallpaper"
-	hyprctl hyprpaper wallpaper ",$wallpaper"
+	hyprctl hyprpaper preload "$wallpaper" &>/dev/null || true
+	hyprctl hyprpaper wallpaper ",$wallpaper" &>/dev/null || true
 }
 
 ## Alacritty ---------------------------------
@@ -308,18 +321,26 @@ apply_wofi() {
 ## GTK Theme ---------------------------------
 apply_gtk() {
 	sed -i "$DIR"/scripts/gtkthemes \
-		-e "s|THEME=.*|THEME='$gtk_theme'|g" \
-		-e "s|ICONS=.*|ICONS='$gtk_icons'|g" \
-		-e "s|FONT=.*|FONT='$gtk_font'|g" \
-		-e "s|CURSOR=.*|CURSOR='$cursor_theme'|g"
+		-e "s|THEME=.*|THEME='${gtk_theme:-Manhattan}'|g" \
+		-e "s|ICONS=.*|ICONS='${gtk_icons:-Luv-Folders-Dark}'|g" \
+		-e "s|FONT=.*|FONT='${gtk_font:-Noto Sans 9}'|g" \
+		-e "s|CURSOR=.*|CURSOR='${cursor_theme:-Qogirr-Dark}'|g" \
+		-e "s|COLOR_SCHEME=.*|COLOR_SCHEME='${color_scheme:-prefer-dark}'|g" \
+		-e "s|PREFER_DARK=.*|PREFER_DARK='${prefer_dark:-1}'|g" \
+		-e "s|PREFER_DARK_BOOL=.*|PREFER_DARK_BOOL='${prefer_dark_bool:-true}'|g" \
+		-e "s|QT_COLOR=.*|QT_COLOR='${qt_color_scheme:-/usr/share/qt5ct/colors/darker.conf}'|g" \
+		-e "s|KDE_COLOR=.*|KDE_COLOR='${kde_color_scheme:-BreezeDark}'|g" \
+		-e "s|KDE_NAME=.*|KDE_NAME='${kde_name:-Breeze Dark}'|g"
 		
-	bash ${DIR}/scripts/gtkthemes &
+	bash "${DIR}/scripts/gtkthemes"
 }
 
 # Geany -------------------------------------
 apply_geany() {
-	sed -i "$HOME"/.config/geany/geany.conf \
-		-e "s/color_scheme=.*/color_scheme=$geany_colors/g"
+	if [[ -f "$HOME/.config/geany/geany.conf" ]]; then
+		sed -i "$HOME"/.config/geany/geany.conf \
+			-e "s/color_scheme=.*/color_scheme=$geany_colors/g"
+	fi
 }
 
 ## Hyprlock ----------------------------------
@@ -357,6 +378,8 @@ apply_hypr() {
 		-e "s/^\(\$group_border_locked_inactive_col[[:space:]]*=[[:space:]]*\).*/\10xFF${modbackground[1]:1}/" \
 		-e "s/^\(\$groupbar_text_color_active[[:space:]]*=[[:space:]]*\).*/\10xFF${background:1}/" \
 		-e "s/^\(\$groupbar_text_color_inactive[[:space:]]*=[[:space:]]*\).*/\10xFF${foreground:1}/"
+
+	hyprctl reload &>/dev/null || true
 }
 
 ## Source Theme Accordingly -----------------
@@ -370,6 +393,7 @@ elif [[ "$1" == '--light' ]]; then
 	apply_geany
 elif [[ "$1" == '--pywal' ]]; then
 	source_pywal
+	apply_gtk
 else
 	echo "Available Options: --default  --light  --pywal"
 	exit 1

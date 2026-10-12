@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+# If rofi is already running, close it (toggle)
+if pgrep -x "rofi" >/dev/null; then
+	pkill -x "rofi"
+	exit 0
+fi
+
+export PATH="$HOME/.local/bin:$PATH"
+
+DIR="$HOME/.config/hypr"
+RASI="$DIR/rofi/clipboard.rasi"
+CACHE_DIR="${XDG_RUNTIME_DIR:-/tmp}/cliphist_cache"
+mkdir -p "$CACHE_DIR"
+
+get_list() {
+	awk -F'\t' -v cache="$CACHE_DIR" '
+	$2 ~ /^\[\[ binary data/ {
+		match($2, /^\[\[ binary data [0-9.]+ [A-Za-z]+ ([a-z0-9]+) [0-9]+x[0-9]+ \]\]$/, m)
+		ext = (m[1] != "" ? m[1] : "png")
+		img = cache "/" $1 "." ext
+		if (system("[ -s " img " ]") != 0) {
+			system("cliphist decode " $1 " > " img)
+		}
+		print $0 "\0icon\x1f" img
+		next
+	}
+	{
+		print $0 "\0icon\x1ftext-x-generic"
+	}
+	' <(cliphist list)
+}
+
+# Capture target window BEFORE opening rofi
+target_win=$(hyprctl activewindow -j 2>/dev/null | grep -Po '"address":\s*"\K[^"]+')
+target_class=$(hyprctl activewindow -j 2>/dev/null | grep -Po '"class":\s*"\K[^"]+')
+selected_row=0
+
+while true; do
+	raw=$(get_list | rofi -dmenu \
+		-show-icons \
+		-theme "${RASI}" \
+		-selected-row "$selected_row" \
+		-hover-select \
+		-me-select-entry '' \
+		-me-accept-entry 'MousePrimary' \
+		-kb-custom-1 "Alt+p,Alt+space" \
+		-format "i s")
+	ret=$?
+
+	# Escape or window closed
+	if [[ $ret -ne 0 && $ret -ne 10 ]]; then
+		break
+	fi
+
+	row="${raw%% *}"
+	item="${raw#* }"
+	selected_row="${row:-0}"
+
+	# Alt+P / Alt+Space -> Open full-resolution image in Viewnior
+	if [[ $ret -eq 10 ]]; then
+		id="${item%%	*}"
+		img=$(find "$CACHE_DIR" -name "${id}.*" 2>/dev/null | head -n 1)
+		if [[ -n "$img" && -f "$img" ]]; then
+			viewnior "$img"
+		fi
+		continue
+	fi
+
+	# Selection -> copy to clipboard and paste into target window
+	if [[ -n "$item" ]]; then
+		printf '%s\n' "$item" | cliphist decode | wl-copy
+		printf '%s\n' "$item" | cliphist decode | wl-copy --primary
+
+		if [[ -n "$target_win" ]]; then
+			# Refocus the target window (Hyprland 0.56+ Lua syntax)
+			hyprctl eval "hl.dispatch(hl.dsp.focus({window=\"address:${target_win}\"}))" >/dev/null 2>&1
+			sleep 0.2
+
+			# Determine the paste shortcut based on window class
+			case "${target_class,,}" in
+				*kitty*|*foot*|*alacritty*|*wezterm*|*ghostty*|*xterm*|*rxvt*)
+					mods="CTRL SHIFT"
+					;;
+				*)
+					mods="CTRL"
+					;;
+			esac
+
+			# Send the paste shortcut directly to the window address
+			hyprctl eval "hl.dispatch(hl.dsp.send_shortcut({mods=\"${mods}\", key=\"v\", window=\"address:${target_win}\"}))" >/dev/null 2>&1
+		fi
+	fi
+	break
+done

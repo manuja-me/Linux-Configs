@@ -1,0 +1,38 @@
+# Yazi Configuration
+
+[opener]
+edit = [
+    { run = 'nvim %s', block = true, desc = "Neovim", for = "unix" },
+]
+pdf = [
+    { run = 'zathura %s', orphan = true, desc = "Zathura", for = "linux" },
+]
+video = [
+    { run = 'mpv %s', orphan = true, desc = "MPV", for = "linux" },
+]
+image = [
+    { run = 'viewnior %s', orphan = true, desc = "Viewnior", for = "linux" },
+]
+open = [
+    { run = 'xdg-open %s', orphan = true, desc = "Open", for = "linux" },
+]
+
+[open]
+prepend_rules = [
+    # Text and Code files -> Neovim
+    { mime = "text/*", use = "edit" },
+    { mime = "application/{json,javascript,typescript,x-shellscript,xml,toml,yaml,x-yaml,x-subrip,x-python,x-ruby,x-perl}", use = "edit" },
+
+    # PDF documents -> Zathura
+    { mime = "application/pdf", use = "pdf" },
+
+    # Media files -> MPV & Viewnior
+    { mime = "video/*", use = "video" },
+    { mime = "audio/*", use = "video" },
+    { mime = "image/*", use = "image" },
+]
+
+append_rules = [
+    # Fallback -> open in Neovim
+    { url = "*", use = "edit" },
+]

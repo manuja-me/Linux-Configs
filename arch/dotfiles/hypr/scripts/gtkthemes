@@ -2,20 +2,115 @@
 
 ## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
 ##
-## Set GTK Themes, Icons, Cursor and Fonts
+## Set GTK Themes, Icons, Cursor, Fonts and Window Colors
 
 THEME='Manhattan'
 ICONS='Luv-Folders-Dark'
 FONT='Noto Sans 9'
 CURSOR='Qogirr-Dark'
+COLOR_SCHEME='prefer-dark'
+PREFER_DARK='1'
+PREFER_DARK_BOOL='true'
+QT_COLOR='/usr/share/qt5ct/colors/darker.conf'
+KDE_COLOR='BreezeDark'
+KDE_NAME='Breeze Dark'
 
 SCHEMA='gsettings set org.gnome.desktop.interface'
 
-apply_themes () {
+apply_gsettings () {
 	${SCHEMA} gtk-theme "$THEME"
 	${SCHEMA} icon-theme "$ICONS"
 	${SCHEMA} cursor-theme "$CURSOR"
 	${SCHEMA} font-name "$FONT"
+	${SCHEMA} color-scheme "$COLOR_SCHEME"
+	gsettings set org.gnome.desktop.wm.preferences button-layout ":"
 }
 
-apply_themes
+apply_gtk3 () {
+	local gtk3_file="$HOME/.config/gtk-3.0/settings.ini"
+	if [[ -f "$gtk3_file" ]]; then
+		sed -i "$gtk3_file" \
+			-e "s|^gtk-theme-name=.*|gtk-theme-name=$THEME|g" \
+			-e "s|^gtk-icon-theme-name=.*|gtk-icon-theme-name=$ICONS|g" \
+			-e "s|^gtk-cursor-theme-name=.*|gtk-cursor-theme-name=$CURSOR|g" \
+			-e "s|^gtk-font-name=.*|gtk-font-name=$FONT|g" \
+			-e "s|^gtk-application-prefer-dark-theme=.*|gtk-application-prefer-dark-theme=$PREFER_DARK|g"
+	else
+		mkdir -p "$HOME/.config/gtk-3.0"
+		cat > "$gtk3_file" <<- _EOF_
+[Settings]
+gtk-decoration-layout=:
+gtk-application-prefer-dark-theme=$PREFER_DARK
+gtk-theme-name=$THEME
+gtk-icon-theme-name=$ICONS
+gtk-cursor-theme-name=$CURSOR
+gtk-cursor-theme-size=16
+gtk-font-name=$FONT
+gtk-toolbar-style=GTK_TOOLBAR_BOTH_HORIZ
+gtk-toolbar-icon-size=GTK_ICON_SIZE_LARGE_TOOLBAR
+gtk-button-images=0
+gtk-menu-images=0
+gtk-enable-event-sounds=1
+gtk-enable-input-feedback-sounds=0
+gtk-xft-antialias=1
+gtk-xft-hinting=1
+gtk-xft-hintstyle=hintslight
+gtk-xft-rgba=none
+_EOF_
+	fi
+}
+
+apply_gtk4 () {
+	local gtk4_file="$HOME/.config/gtk-4.0/settings.ini"
+	if [[ -f "$gtk4_file" ]]; then
+		sed -i "$gtk4_file" \
+			-e "s|^gtk-theme-name=.*|gtk-theme-name=$THEME|g" \
+			-e "s|^gtk-icon-theme-name=.*|gtk-icon-theme-name=$ICONS|g" \
+			-e "s|^gtk-cursor-theme-name=.*|gtk-cursor-theme-name=$CURSOR|g" \
+			-e "s|^gtk-font-name=.*|gtk-font-name=$FONT|g" \
+			-e "s|^gtk-application-prefer-dark-theme=.*|gtk-application-prefer-dark-theme=$PREFER_DARK_BOOL|g"
+	fi
+}
+
+apply_gtk2 () {
+	local gtk2_file="$HOME/.gtkrc-2.0"
+	cat > "$gtk2_file" <<- _EOF_
+gtk-theme-name="$THEME"
+gtk-icon-theme-name="$ICONS"
+gtk-font-name="$FONT"
+gtk-cursor-theme-name="$CURSOR"
+_EOF_
+}
+
+apply_xfce () {
+	if command -v xfconf-query &>/dev/null; then
+		xfconf-query -c xsettings -p /Net/ThemeName -s "$THEME" 2>/dev/null || true
+		xfconf-query -c xsettings -p /Net/IconThemeName -s "$ICONS" 2>/dev/null || true
+		xfconf-query -c xsettings -p /Gtk/CursorThemeName -s "$CURSOR" 2>/dev/null || true
+		xfconf-query -c xsettings -p /Gtk/FontName -s "$FONT" 2>/dev/null || true
+	fi
+}
+
+apply_qt () {
+	local qt5_file="$HOME/.config/qt5ct/qt5ct.conf"
+	if [[ -f "$qt5_file" ]]; then
+		sed -i "$qt5_file" \
+			-e "s|^color_scheme_path=.*|color_scheme_path=$QT_COLOR|g" \
+			-e "s|^icon_theme=.*|icon_theme=$ICONS|g"
+	fi
+
+	local kde_file="$HOME/.config/kdeglobals"
+	if [[ -f "$kde_file" ]]; then
+		sed -i "$kde_file" \
+			-e "s|^ColorScheme=.*|ColorScheme=$KDE_COLOR|g" \
+			-e "s|^Name=.*|Name=$KDE_NAME|g"
+	fi
+}
+
+apply_gsettings
+apply_gtk3
+apply_gtk4
+apply_gtk2
+apply_xfce
+apply_qt
+

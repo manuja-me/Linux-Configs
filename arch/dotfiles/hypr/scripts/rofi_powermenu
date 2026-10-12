@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Toggle rofi if already open
+if pgrep -x "rofi" >/dev/null; then
+	pkill -x "rofi"
+	exit 0
+fi
+
+
 ## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
 
 # Import Current Theme
@@ -70,7 +77,9 @@ confirm_exit() {
 confirm_run () {	
 	selected="$(confirm_exit)"
 	if [[ "$selected" == "$yes" ]]; then
-        ${1} && ${2} && ${3} && ${4}
+		for cmd in "$@"; do
+			eval "$cmd"
+		done
     else
         exit
     fi	
@@ -81,7 +90,7 @@ run_cmd() {
 	if [[ "$1" == '--opt1' ]]; then
 		hyprlock
 	elif [[ "$1" == '--opt2' ]]; then
-		confirm_run 'hyprctl dispatch exit 0'
+		confirm_run 'hyprctl dispatch "hl.dsp.exit()" 2>/dev/null || pkill -x -u $USER Hyprland'
 	elif [[ "$1" == '--opt3' ]]; then
 		confirm_run 'mpc -q pause' 'pulsemixer --mute' 'systemctl suspend'
 	elif [[ "$1" == '--opt4' ]]; then

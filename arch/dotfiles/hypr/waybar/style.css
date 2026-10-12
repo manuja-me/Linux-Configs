@@ -28,7 +28,7 @@ window#waybar.hidden {
 
 #custom-power, #custom-themes, #custom-lightmode {
 	color: @background;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 6px 6px 0px;
 	padding: 2px 8px 2px 8px;
 }
@@ -46,7 +46,7 @@ window#waybar.hidden {
 	background-color: @background-alt1;
 	color: @magenta;
 	font-size: 18px;
-	border-radius: 0px 14px 0px 0px;
+	border-radius: 0px;
 	margin: 0px 0px 0px 0px;
 	padding: 2px 8px 2px 8px;
 }
@@ -66,7 +66,7 @@ window#waybar.hidden {
     background-color: @background-alt1;
 	color: @foreground;
 	font-size: 16px;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 9px;
 }
@@ -79,7 +79,7 @@ window#waybar.hidden {
 #idle_inhibitor {
 	background-color: @green;
 	color: @background;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 6px;
 }
@@ -90,7 +90,7 @@ window#waybar.hidden {
 /** ********** Tray ********** **/
 #tray {
 	background-color: @background-alt1;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 6px;
 }
@@ -134,7 +134,7 @@ window#waybar.hidden {
 }
 
 #mpd.2 {
-	border-radius: 10px 0px 0px 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 6px 4px 10px;
 }
@@ -143,7 +143,7 @@ window#waybar.hidden {
 	padding: 4px;
 }
 #mpd.4 {
-	border-radius: 0px 10px 10px 0px;
+	border-radius: 0px;
 	margin: 6px 6px 6px 0px ;
 	padding: 4px 10px 4px 6px;
 }
@@ -156,7 +156,7 @@ window#waybar.hidden {
 #custom-spotify {
 	background-color: @background-alt1;
 	color: @foreground;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 8px;
 	font-size: 12px;
@@ -289,7 +289,7 @@ window#waybar.hidden {
 	color: @foreground;
 	font-size: 12px;
 	font-weight: bold;
-	border-radius: 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 6px ;
 	padding: 4px 8px;
 }
@@ -305,21 +305,30 @@ window#waybar.hidden {
 /** ********** WLR Desktop ********** **/
 #workspaces {
 	background-color: @background;
-	border-radius: 10px;
-	margin-left: 6px ;
-	margin-bottom: 2px ;
+	border-radius: 0px;
+	margin: 0px 6px;
 	padding: 0px;
 }
-#workspaces button{
+#workspaces button {
 	color: @foreground;
+	font-weight: bold;
+	border-radius: 0px;
+	margin: 6px 2px;
+	padding: 2px 8px;
+	background: transparent;
+	border: none;
 }
-#workspaces button.active{
-	color: @red;
+#workspaces button.active {
+	background-color: @red;
+	color: @background;
+	border-radius: 0px;
 }
-#workspaces button.urgent{
-	color: @green;
+#workspaces button.urgent {
+	background-color: @green;
+	color: @background;
+	border-radius: 0px;
 }
-#workspaces button.hidden{
+#workspaces button.hidden {
 	color: @yellow;
 }
 
@@ -334,7 +343,7 @@ window#waybar.hidden {
 #network,
 #bluetooth {
 	background-color: @background-alt2;
-	border-radius: 10px 0px 0px 10px;
+	border-radius: 0px;
 	margin: 6px 0px 6px 0px ;
 	padding: 4px 6px;
 }
@@ -352,7 +361,7 @@ window#waybar.hidden {
 	color: @foreground;
 	font-size: 12px;
 	font-weight: bold;
-	border-radius: 0px 10px 10px 0px;
+	border-radius: 0px;
 	margin: 6px 6px 6px 0px ;
 	padding: 5px 6px 4px 6px;
 }

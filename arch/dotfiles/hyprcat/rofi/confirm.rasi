@@ -12,7 +12,7 @@ configuration {
 @import                          "shared/fonts.rasi"
 
 /*
-USE_ICON=YES
+USE_ICON=NO
 */
 
 /*****----- Main Window -----*****/
@@ -94,7 +94,7 @@ textbox {
 /*****----- Listview -----*****/
 listview {
     enabled:                     true;
-    columns:                     6;
+    columns:                     2;
     lines:                       1;
     cycle:                       true;
     scrollbar:                   false;
@@ -108,7 +108,7 @@ listview {
 /*****----- Elements -----*****/
 element {
     enabled:                     true;
-    padding:                     28px;
+    padding:                     12px 10px;
     border:                      0px solid;
     border-radius:               30px;
     border-color:                @selected;
@@ -117,11 +117,11 @@ element {
     cursor:                      pointer;
 }
 element-text {
-    font:                        "feather 28";
+    font:                        "feather 14, JetBrainsMono Nerd Font 10";
     background-color:            transparent;
     text-color:                  inherit;
     cursor:                      inherit;
-    vertical-align:              0;
+    vertical-align:              0.5;
     horizontal-align:            0.5;
 }
 

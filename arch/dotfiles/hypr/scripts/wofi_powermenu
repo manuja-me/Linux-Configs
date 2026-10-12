@@ -80,7 +80,7 @@ open_menu () {
 		$logout)
 			cdialog
 			if [[ "$?" == 0 ]]; then
-				hyprctl dispatch exit 0
+				hyprctl dispatch "hl.dsp.exit()" 2>/dev/null || pkill -x -u $USER Hyprland
 			else
 				exit
 			fi

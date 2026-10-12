@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+## Script to switch or cycle power profiles (power-profiles-daemon)
+
+current=$(powerprofilesctl get)
+
+case "$1" in
+	--cycle)
+		case "$current" in
+			power-saver) next="balanced" ;;
+			balanced)    next="performance" ;;
+			performance) next="power-saver" ;;
+			*)           next="balanced" ;;
+		esac
+		;;
+	--saver|--quiet)
+		next="power-saver"
+		;;
+	--balanced)
+		next="balanced"
+		;;
+	--performance|--turbo)
+		next="performance"
+		;;
+	--get)
+		echo "$current"
+		exit 0
+		;;
+	*)
+		case "$current" in
+			power-saver) next="balanced" ;;
+			balanced)    next="performance" ;;
+			performance) next="power-saver" ;;
+			*)           next="balanced" ;;
+		esac
+		;;
+esac
+
+powerprofilesctl set "$next"

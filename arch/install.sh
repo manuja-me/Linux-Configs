@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Arch Linux -> Aesthetic Hyprland Rice Installer & Tinkering Script
+# Arch Linux -> Aesthetic Hyprland Rice Reproducible Installer (Verbose Mode)
 # ==============================================================================
-# Works with the hyprlandConfig bundle (Archcraft / Hyprland Rice)
-# Transforms a barebone Arch Linux installation into a fully configured desktop.
+# Full interactive post-base Arch TTY installer with automatic verbose logging
+# and detailed error diagnostics.
+# Usage:
+#   ./install.sh              # Interactive wizard + automatic verbose execution
+#   ./install.sh --defaults   # Unattended install with live-system defaults
 # ==============================================================================
 
-set -euo pipefail
+set -Eeuo pipefail
 
 # Text styling
-BOLD="$(tput bold 2>/dev/null || echo '')"
-GREEN="$(tput setaf 2 2>/dev/null || echo '')"
-BLUE="$(tput setaf 4 2>/dev/null || echo '')"
-CYAN="$(tput setaf 6 2>/dev/null || echo '')"
-YELLOW="$(tput setaf 3 2>/dev/null || echo '')"
-RED="$(tput setaf 1 2>/dev/null || echo '')"
-RESET="$(tput sgr0 2>/dev/null || echo '')"
+BOLD="$(tput bold 2>/dev/null || printf '\033[1m')"
+GREEN="$(tput setaf 2 2>/dev/null || printf '\033[32m')"
+BLUE="$(tput setaf 4 2>/dev/null || printf '\033[34m')"
+CYAN="$(tput setaf 6 2>/dev/null || printf '\033[36m')"
+YELLOW="$(tput setaf 3 2>/dev/null || printf '\033[33m')"
+RED="$(tput setaf 1 2>/dev/null || printf '\033[31m')"
+RESET="$(tput sgr0 2>/dev/null || printf '\033[0m')"
 
 log_info()    { echo -e "${BLUE}${BOLD}[*]${RESET} $1"; }
 log_success() { echo -e "${GREEN}${BOLD}[✓]${RESET} $1"; }
@@ -23,26 +26,113 @@ log_warn()    { echo -e "${YELLOW}${BOLD}[!]${RESET} $1"; }
 log_err()     { echo -e "${RED}${BOLD}[✗]${RESET} $1"; }
 log_section() { echo -e "\n${CYAN}${BOLD}=== $1 ===${RESET}\n"; }
 
-# ------------------------------------------------------------------------------
-# 0. Configuration & Path Detection
-# ------------------------------------------------------------------------------
-CURRENT_USER="${SUDO_USER:-$(whoami)}"
-USER_HOME=$(getent passwd "$CURRENT_USER" | cut -d: -f6)
-CONFIG_DIR="$USER_HOME/.config"
-DATA_DIR="$USER_HOME/.local/share"
-BACKUP_DIR="$USER_HOME/.config-backups/hypr-rice-$(date +%Y%m%d-%H%M%S)"
+LOG_FILE="/tmp/arch-hypr-install-$(date +%Y%m%d-%H%M%S).log"
+exec > >(tee -a "$LOG_FILE") 2>&1
 
-# Locate hyprlandConfig folder
+on_error() {
+    local exit_code=$?
+    local line_no=$1
+    local func_name="${2:-main}"
+    local cmd="$3"
+    set +x 2>/dev/null || true
+    echo -e "\n${RED}${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}" >&2
+    echo -e "${RED}${BOLD}║                  INSTALLATION ERROR DETECTED                 ║${RESET}" >&2
+    echo -e "${RED}${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}" >&2
+    echo -e "  ${RED}${BOLD}• Function :${RESET} ${func_name}()" >&2
+    echo -e "  ${RED}${BOLD}• Line     :${RESET} ${line_no}" >&2
+    echo -e "  ${RED}${BOLD}• Exit Code:${RESET} ${exit_code}" >&2
+    echo -e "  ${RED}${BOLD}• Command  :${RESET} ${cmd}" >&2
+    echo -e "  ${YELLOW}${BOLD}• Full Log :${RESET} ${LOG_FILE}" >&2
+    echo -e "  ${CYAN}${BOLD}• Rollback :${RESET} ${SRC_DIR:-.}/restore.sh\n" >&2
+}
+trap 'on_error $LINENO "${FUNCNAME[0]:-main}" "$BASH_COMMAND"' ERR
+
+# Attach stdin to /dev/tty so sudo, su, passwd, and yay can always prompt for passwords interactively
+if [[ -e /dev/tty ]]; then
+    exec </dev/tty
+fi
+
+UNATTENDED=false
+for arg in "$@"; do
+    case "$arg" in
+        -y|--yes|--defaults) UNATTENDED=true ;;
+    esac
+done
+
+# Helper to read from /dev/tty even if script was piped
+prompt_input() {
+    local prompt_text="$1"
+    local default_val="$2"
+    local reply=""
+    if [[ "$UNATTENDED" == true ]] || [[ ! -e /dev/tty ]]; then
+        echo "$default_val"
+        return 0
+    fi
+    read -r -p "$prompt_text" reply </dev/tty || true
+    echo "${reply:-$default_val}"
+}
+
+prompt_yn() {
+    local prompt_text="$1"
+    local default_ans="${2:-Y}"
+    local hint="[Y/n]"
+    [[ "$default_ans" =~ ^[Nn]$ ]] && hint="[y/N]"
+    if [[ "$UNATTENDED" == true ]] || [[ ! -e /dev/tty ]]; then
+        [[ "$default_ans" =~ ^[Yy]$ ]] && return 0 || return 1
+    fi
+    local reply=""
+    read -r -p "${prompt_text} ${hint}: " reply </dev/tty || true
+    reply="${reply:-$default_ans}"
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+ensure_sudo() {
+    if [[ $EUID -eq 0 ]]; then
+        return 0
+    fi
+    if ! sudo -n true 2>/dev/null; then
+        log_warn "Sudo privileges required — please type your sudo password:"
+        if ! sudo -v </dev/tty; then
+            log_warn "User '$(whoami)' may not be in sudoers yet. Enter root password (su) to enable wheel sudo access:"
+            su -c "mkdir -p /etc/sudoers.d && echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel && chmod 440 /etc/sudoers.d/10-wheel && usermod -aG wheel $(whoami)" </dev/tty
+            log_info "Now enter your user sudo password:"
+            sudo -v </dev/tty
+        fi
+    fi
+}
+
+run_root() {
+    if [[ $EUID -eq 0 ]]; then
+        "$@"
+    else
+        ensure_sudo
+        sudo "$@"
+    fi
+}
+
+run_as_user() {
+    if [[ "$(whoami)" == "$TARGET_USER" ]]; then
+        "$@"
+    elif [[ $EUID -eq 0 ]]; then
+        sudo -u "$TARGET_USER" -H "$@"
+    else
+        ensure_sudo
+        sudo -u "$TARGET_USER" -H "$@"
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# 0. Locate Source Repository
+# ------------------------------------------------------------------------------
 find_config_source() {
     local script_dir
     script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local candidates=(
         "$script_dir"
+        "$PWD/arch"
         "$PWD"
-        "$USER_HOME/Downloads/hyprlandConfig"
-        "/downloads/hyprlandConfig"
-        "$USER_HOME/hyprlandConfig"
-        "/tmp/hyprlandConfig"
+        "$HOME/nixos-config/arch"
+        "$HOME/Documents/github/nixos-config/arch"
     )
     for path in "${candidates[@]}"; do
         if [[ -d "$path/dotfiles" && -d "$path/gtk" && -d "$path/fonts" ]]; then
@@ -55,158 +145,343 @@ find_config_source() {
 
 SRC_DIR="$(find_config_source || true)"
 if [[ -z "$SRC_DIR" ]]; then
-    log_err "Could not find valid 'hyprlandConfig' directory."
-    log_warn "Please run this script from inside the hyprlandConfig directory or place it at ~/Downloads/hyprlandConfig"
+    log_err "Could not find valid 'arch/' configuration directory."
     exit 1
 fi
 
-log_info "Using hyprlandConfig source from: ${BOLD}$SRC_DIR${RESET}"
-log_info "Target user: ${BOLD}$CURRENT_USER${RESET} (Home: $USER_HOME)"
-
 # ------------------------------------------------------------------------------
-# 1. Package Management & Dependencies
+# 1. Interactive Setup Wizard
 # ------------------------------------------------------------------------------
-PACMAN_DEPS=(
-    # Base Wayland & Hyprland
-    hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xorg-xwayland
-    xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
-    xdg-user-dirs xdg-utils qt5-wayland qt6-wayland qt5ct
+interactive_wizard() {
+    log_section "Step 0: Interactive Build Configuration"
 
-    # Status Bar, Launchers, UI & Notifications
-    waybar rofi wofi mako yad libnotify
-    polkit-gnome polkit-kde-agent
+    local detected_user="${SUDO_USER:-$(whoami)}"
+    [[ "$detected_user" == "root" ]] && detected_user="user"
 
-    # Audio & Media
-    pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber
-    pavucontrol pulsemixer pamixer mpd mpc mpv
+    echo -e "${BOLD}1. Target User Account${RESET}"
+    TARGET_USER="$(prompt_input "   Enter target username [${detected_user}]: " "$detected_user")"
+    # Sanitize username
+    TARGET_USER="$(echo "$TARGET_USER" | tr -cd 'a-zA-Z0-9_-')"
+    [[ -z "$TARGET_USER" ]] && TARGET_USER="user"
 
-    # Terminals & File Management
-    kitty alacritty foot thunar thunar-archive-plugin thunar-volman
-    tumbler file-roller xarchiver viewnior geany
+    echo -e "\n${BOLD}2. GPU Driver Selection${RESET}"
+    echo "   1) Intel (mesa, vulkan-intel, intel-media-driver, libva-intel-driver) [Default]"
+    echo "   2) AMD (mesa, vulkan-radeon, libva-mesa-driver)"
+    echo "   3) NVIDIA (nvidia-dkms, nvidia-utils, libva-nvidia-driver + Wayland env)"
+    echo "   4) VM / Software / Skip GPU drivers"
+    GPU_CHOICE="$(prompt_input "   Select GPU option [1-4, default: 1]: " "1")"
 
-    # Screenshots, Wallpaper & Theming Tools
-    grim slurp swappy imagemagick wl-clipboard wf-recorder
-    python-pywal brightnessctl light pastel fastfetch btop
+    echo -e "\n${BOLD}3. Display Manager (SDDM) Theme${RESET}"
+    echo "   1) Corners (Catppuccin Mocha custom theme) [Default]"
+    echo "   2) Astronaut (sddm-astronaut-theme)"
+    echo "   3) Skip SDDM configuration"
+    SDDM_CHOICE="$(prompt_input "   Select SDDM theme [1-3, default: 1]: " "1")"
 
-    # Network & Bluetooth
-    networkmanager network-manager-applet bluez bluez-utils blueman
-
-    # Fonts & Base System
-    noto-fonts noto-fonts-emoji ttf-jetbrains-mono ttf-jetbrains-mono-nerd
-    ttf-nerd-fonts-symbols otf-font-awesome
-)
-
-AUR_DEPS=(
-    wlogout
-    sddm-astronaut-theme
-)
-
-install_packages() {
-    log_section "Step 1: Installing Required Packages"
-
-    log_info "Updating pacman repositories..."
-    sudo pacman -Sy --needed --noconfirm "${PACMAN_DEPS[@]}"
-
-    # Detect or install AUR helper
-    local aur_helper=""
-    if command -v paru &>/dev/null; then
-        aur_helper="paru"
-    elif command -v yay &>/dev/null; then
-        aur_helper="yay"
-    else
-        log_warn "No AUR helper found. Installing yay-bin..."
-        local tmp_dir
-        tmp_dir=$(mktemp -d)
-        git clone https://aur.archlinux.org/yay-bin.git "$tmp_dir/yay-bin"
-        (cd "$tmp_dir/yay-bin" && makepkg -si --noconfirm)
-        rm -rf "$tmp_dir"
-        aur_helper="yay"
+    echo -e "\n${BOLD}4. Bootloader & Recovery Tools${RESET}"
+    INSTALL_GRUB_THEME=false
+    if prompt_yn "   Install Elegant GRUB2 theme & enable os-prober?" "Y"; then
+        INSTALL_GRUB_THEME=true
     fi
 
-    log_info "Installing AUR dependencies using $aur_helper..."
-    $aur_helper -S --needed --noconfirm "${AUR_DEPS[@]}" || log_warn "Some AUR packages failed to install, proceeding..."
+    echo -e "\n${BOLD}5. Optional Feature Bundles${RESET}"
+    INSTALL_SHELL_TUI=false
+    if prompt_yn "   Install Shell & TUI Suite (Zsh, Oh-My-Zsh, Neovim/LazyVim, Yazi, Btop, Cava, Fastfetch, Zathura)?" "Y"; then
+        INSTALL_SHELL_TUI=true
+    fi
 
-    log_success "Packages installed successfully."
+    INSTALL_MEDIA=false
+    if prompt_yn "   Install Media & Audio Suite (Spotify, Spicetify, EasyEffects, MPV, MPD/ncmpcpp, yt-dlp)?" "Y"; then
+        INSTALL_MEDIA=true
+    fi
+
+    INSTALL_EXTRA_APPS=false
+    if prompt_yn "   Install Extra Desktop Utilities (Firefox, Chromium, LocalSend, GParted, Timeshift, Transmission)?" "Y"; then
+        INSTALL_EXTRA_APPS=true
+    fi
+
+    INSTALL_VIRT=false
+    if prompt_yn "   Install KVM/QEMU Virtualization Suite (QEMU, libvirt, Virt-Manager)?" "Y"; then
+        INSTALL_VIRT=true
+    fi
+
+    INSTALL_ANTIGRAVITY=false
+    if prompt_yn "   Run Google Antigravity & AI Agent Setup (agy, claude-mem, headroom, opencode)?" "Y"; then
+        INSTALL_ANTIGRAVITY=true
+    fi
+
+    echo ""
+    log_info "Summary:"
+    echo "   • Target User       : $TARGET_USER"
+    echo "   • GPU Choice        : $GPU_CHOICE"
+    echo "   • SDDM Theme        : $SDDM_CHOICE"
+    echo "   • GRUB Theme        : $INSTALL_GRUB_THEME"
+    echo "   • Shell & TUI Suite : $INSTALL_SHELL_TUI"
+    echo "   • Media Suite       : $INSTALL_MEDIA"
+    echo "   • Extra Utilities   : $INSTALL_EXTRA_APPS"
+    echo "   • Virtualization    : $INSTALL_VIRT"
+    echo "   • Antigravity AI    : $INSTALL_ANTIGRAVITY"
+    echo ""
+    if ! prompt_yn "Proceed with installation?" "Y"; then
+        log_warn "Installation aborted by user."
+        exit 0
+    fi
 }
 
 # ------------------------------------------------------------------------------
-# 2. Backup Existing Configurations
+# 2. User Account & Privilege Setup
+# ------------------------------------------------------------------------------
+setup_user_account() {
+    log_section "Step 1: Configuring User Account ($TARGET_USER)"
+
+    if ! id "$TARGET_USER" &>/dev/null; then
+        log_info "User '$TARGET_USER' does not exist. Creating account..."
+        run_root useradd -m -G wheel,video,input -s /bin/bash "$TARGET_USER"
+        if [[ "$UNATTENDED" == false && -e /dev/tty ]]; then
+            log_info "Set password for '$TARGET_USER':"
+            run_root passwd "$TARGET_USER" </dev/tty
+        fi
+    else
+        log_info "User '$TARGET_USER' exists. Ensuring group memberships..."
+        run_root usermod -aG wheel,video,input "$TARGET_USER" 2>/dev/null || true
+    fi
+
+    USER_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+    CONFIG_DIR="$USER_HOME/.config"
+    DATA_DIR="$USER_HOME/.local/share"
+    BACKUP_DIR="$USER_HOME/.config-backups/hypr-rice-$(date +%Y%m%d-%H%M%S)"
+
+    # Ensure wheel group has sudo permissions (prompts for sudo password when needed)
+    run_root mkdir -p /etc/sudoers.d
+    echo "%wheel ALL=(ALL:ALL) ALL" | run_root tee /etc/sudoers.d/10-wheel >/dev/null
+    run_root chmod 440 /etc/sudoers.d/10-wheel
+
+    # If repo was cloned into /root, copy it into target user's home directory
+    local repo_root
+    repo_root="$(cd "$SRC_DIR/.." && pwd)"
+    if [[ "$repo_root" == /root/* && ! -d "$USER_HOME/nixos-config" ]]; then
+        log_info "Copying repository to $USER_HOME/nixos-config..."
+        run_root cp -ra "$repo_root" "$USER_HOME/nixos-config"
+        run_root chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/nixos-config"
+        SRC_DIR="$USER_HOME/nixos-config/arch"
+    fi
+
+    log_success "User '$TARGET_USER' ready (Home: $USER_HOME)."
+}
+
+# ------------------------------------------------------------------------------
+# 3. Package Management & Dependencies
+# ------------------------------------------------------------------------------
+install_packages() {
+    log_section "Step 2: Installing System & Desktop Packages"
+
+    local pacman_pkgs=(
+        # Core Build & System Utilities
+        base-devel git curl wget rsync unzip unrar 7zip
+        xdg-user-dirs xdg-utils gvfs polkit-gnome polkit-kde-agent
+
+        # Wayland & Hyprland Core
+        hyprland hyprlock hypridle hyprpaper hyprpicker hyprsunset xorg-xwayland uwsm
+        xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
+        qt5-wayland qt6-wayland qt5ct qt5-quickcontrols2 qt6-virtualkeyboard
+
+        # Status Bar, Launchers & Notifications
+        waybar rofi wofi mako yad libnotify
+
+        # Audio (PipeWire)
+        pipewire pipewire-pulse pipewire-alsa pipewire-jack wireplumber
+        gst-plugin-pipewire libpulse pavucontrol pulsemixer pamixer sof-firmware
+
+        # Terminals & File Managers
+        kitty alacritty foot thunar thunar-archive-plugin thunar-volman
+        tumbler file-roller xarchiver viewnior geany ranger
+
+        # Screenshots, Clipboard, Wallpaper & Theming
+        grim slurp swappy imagemagick wl-clipboard wf-recorder cliphist
+        brightnessctl pastel lxappearance xfce4-settings materia-gtk-theme breeze breeze-gtk
+
+        # Network, Bluetooth & Power
+        networkmanager network-manager-applet bluez bluez-utils blueman
+        power-profiles-daemon
+
+        # Display Manager
+        sddm
+
+        # Fonts
+        noto-fonts noto-fonts-emoji ttf-jetbrains-mono ttf-jetbrains-mono-nerd
+        ttf-nerd-fonts-symbols otf-font-awesome woff2-font-awesome ttf-croscore
+    )
+
+    local aur_pkgs=(
+        wlogout
+        python-pywal
+        light
+    )
+
+    # GPU Drivers
+    case "$GPU_CHOICE" in
+        1) pacman_pkgs+=(mesa vulkan-intel intel-media-driver libva-intel-driver intel-ucode) ;;
+        2) pacman_pkgs+=(mesa vulkan-radeon libva-mesa-driver amd-ucode) ;;
+        3) pacman_pkgs+=(nvidia-dkms nvidia-utils libva-nvidia-driver) ;;
+        *) log_info "Skipping dedicated GPU driver packages." ;;
+    esac
+
+    # SDDM Theme Packages
+    case "$SDDM_CHOICE" in
+        1) aur_pkgs+=(sddm-theme-corners-git) ;;
+        2) aur_pkgs+=(sddm-astronaut-theme) ;;
+    esac
+
+    # GRUB / Boot Packages
+    if [[ "$INSTALL_GRUB_THEME" == true ]]; then
+        pacman_pkgs+=(grub efibootmgr os-prober)
+    fi
+
+    # Shell & TUI Bundle
+    if [[ "$INSTALL_SHELL_TUI" == true ]]; then
+        pacman_pkgs+=(
+            zsh neovim yazi fzf gum fastfetch btop htop cava
+            zathura zathura-pdf-mupdf ueberzugpp poppler man-db
+            npm python-pip python-pipx rustup
+        )
+    fi
+
+    # Media & Audio Bundle
+    if [[ "$INSTALL_MEDIA" == true ]]; then
+        pacman_pkgs+=(easyeffects calf mpv mpd mpc ncmpcpp yt-dlp)
+        aur_pkgs+=(spotify spicetify-cli)
+    fi
+
+    # Extra Desktop Utilities
+    if [[ "$INSTALL_EXTRA_APPS" == true ]]; then
+        pacman_pkgs+=(
+            firefox chromium gparted timeshift transmission-qt
+            ntfs-3g exfatprogs reflector aria2 nvtop smartmontools
+        )
+        aur_pkgs+=(localsend-bin linutil)
+    fi
+
+    # Virtualization Suite
+    if [[ "$INSTALL_VIRT" == true ]]; then
+        pacman_pkgs+=(qemu-desktop qemu-emulators-full libvirt virt-manager dnsmasq swtpm dmidecode iptables)
+    fi
+
+    log_info "Installing official repository packages via pacman..."
+    run_root pacman -Sy --needed --noconfirm "${pacman_pkgs[@]}"
+
+    # Install or detect AUR helper (yay)
+    local aur_helper=""
+    if command -v yay &>/dev/null; then
+        aur_helper="yay"
+    elif command -v paru &>/dev/null; then
+        aur_helper="paru"
+    else
+        log_info "Installing yay-bin AUR helper as $TARGET_USER (type sudo password if prompted)..."
+        ensure_sudo
+        local tmp_yay="/tmp/yay-bin-$$"
+        run_root rm -rf "$tmp_yay"
+        run_as_user git clone https://aur.archlinux.org/yay-bin.git "$tmp_yay"
+        (cd "$tmp_yay" && run_as_user makepkg -si --noconfirm)
+        run_root rm -rf "$tmp_yay"
+        aur_helper="yay"
+    fi
+
+    log_info "Installing AUR packages via $aur_helper (type sudo password if prompted)..."
+    ensure_sudo
+    run_as_user "$aur_helper" -S --needed --noconfirm "${aur_pkgs[@]}" || log_warn "Some optional AUR packages could not be built; continuing..."
+
+    log_success "Package installation complete."
+}
+
+# ------------------------------------------------------------------------------
+# 4. Pre-Install Snapshot Backup
 # ------------------------------------------------------------------------------
 backup_existing() {
-    log_section "Step 2: Backing Up Existing Configurations"
-    mkdir -p "$BACKUP_DIR"
+    log_section "Step 3: Creating Pre-Install Configuration Snapshot"
+    run_as_user mkdir -p "$BACKUP_DIR"
 
     local items_to_backup=(
         "$CONFIG_DIR/hypr"
         "$CONFIG_DIR/hyprcat"
         "$CONFIG_DIR/kitty"
         "$CONFIG_DIR/alacritty"
-        "$CONFIG_DIR/waybar"
-        "$CONFIG_DIR/rofi"
-        "$CONFIG_DIR/mako"
-        "$CONFIG_DIR/wlogout"
-        "$CONFIG_DIR/wofi"
         "$CONFIG_DIR/gtk-3.0"
+        "$CONFIG_DIR/geany"
         "$CONFIG_DIR/ncmpcpp"
         "$CONFIG_DIR/ranger"
-        "$CONFIG_DIR/geany"
+        "$CONFIG_DIR/nvim"
+        "$CONFIG_DIR/yazi"
+        "$CONFIG_DIR/btop"
+        "$CONFIG_DIR/cava"
+        "$CONFIG_DIR/mpv"
+        "$CONFIG_DIR/qt5ct"
+        "$CONFIG_DIR/spicetify"
+        "$CONFIG_DIR/Thunar"
+        "$CONFIG_DIR/viewnior"
+        "$CONFIG_DIR/xarchiver"
+        "$CONFIG_DIR/fontconfig"
+        "$USER_HOME/.zshrc"
+        "$USER_HOME/.zprofile"
+        "$USER_HOME/.gtkrc-2.0"
     )
 
     for item in "${items_to_backup[@]}"; do
         if [[ -e "$item" ]]; then
-            log_info "Backing up $(basename "$item") to $BACKUP_DIR"
-            cp -ra "$item" "$BACKUP_DIR/"
+            cp -ra "$item" "$BACKUP_DIR/" || true
         fi
     done
 
-    log_success "Backup saved in: $BACKUP_DIR"
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$USER_HOME/.config-backups"
+    log_success "Snapshot saved to: $BACKUP_DIR"
 }
 
 # ------------------------------------------------------------------------------
-# 3. Installing Fonts, GTK Themes, Icons & Cursors
+# 5. Fonts, GTK Themes, Icons & Cursors
 # ------------------------------------------------------------------------------
 install_assets() {
-    log_section "Step 3: Installing Fonts, GTK Themes, Icons & Cursors"
+    log_section "Step 4: Installing Fonts, GTK Themes, Icons & Cursors"
 
-    # 1. Fonts
-    log_info "Installing fonts into $DATA_DIR/fonts..."
-    mkdir -p "$DATA_DIR/fonts"
+    run_as_user mkdir -p "$DATA_DIR/fonts" "$DATA_DIR/themes" "$DATA_DIR/icons"
+
     cp -rf "$SRC_DIR/fonts"/* "$DATA_DIR/fonts/"
-    log_info "Updating font cache..."
-    fc-cache -fv >/dev/null 2>&1
-
-    # 2. GTK Themes
-    log_info "Installing GTK themes into $DATA_DIR/themes..."
-    mkdir -p "$DATA_DIR/themes"
     cp -rf "$SRC_DIR/gtk/theme"/* "$DATA_DIR/themes/"
-
-    # 3. Icons & Cursors
-    log_info "Installing Icons & Cursors into $DATA_DIR/icons..."
-    mkdir -p "$DATA_DIR/icons"
     cp -rf "$SRC_DIR/gtk/icons"/* "$DATA_DIR/icons/"
     cp -rf "$SRC_DIR/gtk/cursor"/* "$DATA_DIR/icons/"
 
-    log_success "Fonts, GTK themes, and icons installed."
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$DATA_DIR"
+    log_info "Updating font cache..."
+    run_as_user fc-cache -fv || true
+
+    log_success "Fonts, themes, icons, and cursors installed."
 }
 
 # ------------------------------------------------------------------------------
-# 4. Deploying Dotfiles
+# 6. Deploying Dotfiles & App Configurations
 # ------------------------------------------------------------------------------
 deploy_dotfiles() {
-    log_section "Step 4: Deploying Desktop Configurations"
+    log_section "Step 5: Deploying Desktop & Application Dotfiles"
 
-    mkdir -p "$CONFIG_DIR"
+    run_as_user mkdir -p "$CONFIG_DIR" "$USER_HOME/Pictures" "$USER_HOME/boot-recovery"
+    run_as_user xdg-user-dirs-update || true
 
-    # Deploy hypr & hyprcat
-    log_info "Deploying ~/.config/hypr and ~/.config/hyprcat..."
+    # Core Hyprland & Hyprcat configs
     cp -rf "$SRC_DIR/dotfiles/hypr" "$CONFIG_DIR/"
     cp -rf "$SRC_DIR/dotfiles/hyprcat" "$CONFIG_DIR/"
 
-    # Deploy terminals config
-    log_info "Setting up terminal configs (Kitty, Alacritty, Foot)..."
+    # Profile picture for Hyprlock
+    if [[ -f "$SRC_DIR/dotfiles/hypr/wallpapers/dp.jpeg" && ! -f "$USER_HOME/Pictures/dp.jpeg" ]]; then
+        cp -f "$SRC_DIR/dotfiles/hypr/wallpapers/dp.jpeg" "$USER_HOME/Pictures/dp.jpeg"
+    elif [[ -f "$SRC_DIR/dotfiles/hypr/wallpapers/profile.jpg" && ! -f "$USER_HOME/Pictures/dp.jpeg" ]]; then
+        cp -f "$SRC_DIR/dotfiles/hypr/wallpapers/profile.jpg" "$USER_HOME/Pictures/dp.jpeg"
+    fi
+
+    # Boot recovery script in ~/boot-recovery
+    if [[ -f "$SRC_DIR/boot-recovery/recover-boot.sh" ]]; then
+        cp -pf "$SRC_DIR/boot-recovery/recover-boot.sh" "$USER_HOME/boot-recovery/recover-boot.sh"
+        chmod +x "$USER_HOME/boot-recovery/recover-boot.sh"
+    fi
+
+    # Kitty & Alacritty top-level configs
     mkdir -p "$CONFIG_DIR/kitty" "$CONFIG_DIR/alacritty"
-    
-    # Kitty configuration
     cat > "$CONFIG_DIR/kitty/kitty.conf" << 'EOF'
 ## Main Kitty Configuration
 include ~/.config/hypr/kitty/colors.conf
@@ -221,7 +496,6 @@ initial_window_height 450
 allow_remote_control yes
 EOF
 
-    # Alacritty configuration
     cat > "$CONFIG_DIR/alacritty/alacritty.toml" << 'EOF'
 ## Main Alacritty Configuration
 [general]
@@ -238,136 +512,100 @@ opacity = 1.0
 style = { shape = "Block", blinking = "On" }
 EOF
 
-    # Deploy misc app configs (gtk-3.0, geany, ncmpcpp, ranger)
-    log_info "Deploying GTK3, Geany, Ncmpcpp, Ranger configs..."
+    # Deploy synced app directories from arch/dotfiles/
+    local synced_apps=(nvim yazi btop cava mpv qt5ct spicetify Thunar viewnior xarchiver fontconfig)
+    for app in "${synced_apps[@]}"; do
+        if [[ -d "$SRC_DIR/dotfiles/$app" ]]; then
+            mkdir -p "$CONFIG_DIR/$app"
+            cp -rf "$SRC_DIR/dotfiles/$app"/. "$CONFIG_DIR/$app/"
+        fi
+    done
+
+    # Deploy misc configs (gtk-3.0, .gtkrc-2.0, geany, ncmpcpp, ranger, mimeapps, xdg-terminals)
     mkdir -p "$CONFIG_DIR/gtk-3.0" "$CONFIG_DIR/geany" "$CONFIG_DIR/ncmpcpp" "$CONFIG_DIR/ranger"
-    
+    [[ -f "$SRC_DIR/misc/.gtkrc-2.0" ]] && cp -f "$SRC_DIR/misc/.gtkrc-2.0" "$USER_HOME/.gtkrc-2.0"
     [[ -f "$SRC_DIR/misc/gtk-3.0/gtk.css" ]] && cp -f "$SRC_DIR/misc/gtk-3.0/gtk.css" "$CONFIG_DIR/gtk-3.0/"
+    [[ -f "$SRC_DIR/misc/gtk-3.0/settings.ini" ]] && cp -f "$SRC_DIR/misc/gtk-3.0/settings.ini" "$CONFIG_DIR/gtk-3.0/"
+    [[ -f "$SRC_DIR/misc/xdg-terminals.list" ]] && cp -f "$SRC_DIR/misc/xdg-terminals.list" "$CONFIG_DIR/xdg-terminals.list"
+    [[ -f "$SRC_DIR/misc/mimeapps.list" ]] && cp -f "$SRC_DIR/misc/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
     [[ -d "$SRC_DIR/misc/geany" ]] && cp -rf "$SRC_DIR/misc/geany"/* "$CONFIG_DIR/geany/"
     [[ -d "$SRC_DIR/misc/ncmpcpp" ]] && cp -rf "$SRC_DIR/misc/ncmpcpp"/* "$CONFIG_DIR/ncmpcpp/"
     [[ -d "$SRC_DIR/misc/ranger" ]] && cp -rf "$SRC_DIR/misc/ranger"/* "$CONFIG_DIR/ranger/"
 
-    # Environment variables for terminals/apps
+    # Environment variables
     mkdir -p "$CONFIG_DIR/environment.d"
     cat > "$CONFIG_DIR/environment.d/10-terminal.conf" << 'EOF'
 TERMINAL=kitty
 BROWSER=firefox
 EDITOR=nvim
 VISUAL=nvim
+QT_QPA_PLATFORMTHEME=qt5ct
+QT_STYLE_OVERRIDE=Fusion
 EOF
 
-    # Ensure scripts have execute permissions
-    chmod +x "$CONFIG_DIR"/hypr/scripts/* "$CONFIG_DIR"/hyprcat/scripts/* "$CONFIG_DIR"/hypr/theme/theme.sh "$CONFIG_DIR"/hyprcat/theme/theme.sh 2>/dev/null || true
-
-    log_success "Dotfiles deployed."
-}
-
-# ------------------------------------------------------------------------------
-# 5. Applying Hyprland Modern Syntax Fixes & Quality of Life Tweaks
-# ------------------------------------------------------------------------------
-apply_tweaks_and_fixes() {
-    log_section "Step 5: Applying Modern Hyprland Fixes & Tweaks"
-
-    # Fix 1: Deprecated options in 02-decoration.conf, 09-misc.conf, 30-layout-dwindle.conf
-    local HYPR_DIR="$CONFIG_DIR/hypr"
-    
-    # Remove deprecated shadow ignore_window
-    sed -i '/ignore_window[[:space:]]*=[[:space:]]*true/d' "$HYPR_DIR/config.d/02-decoration.conf" 2>/dev/null || true
-    # Remove deprecated vfr/cm_fs_passthrough
-    sed -i '/vfr[[:space:]]*=[[:space:]]*true/d' "$HYPR_DIR/config.d/09-misc.conf" 2>/dev/null || true
-    sed -i '/cm_fs_passthrough/d' "$HYPR_DIR/config.d/09-misc.conf" 2>/dev/null || true
-    # Remove pseudotile and obsolete aspect ratio lines
-    sed -i '/pseudotile/d' "$HYPR_DIR/config.d/30-layout-dwindle.conf" 2>/dev/null || true
-    sed -i '/single_window_aspect_ratio/d' "$HYPR_DIR/config.d/30-layout-dwindle.conf" 2>/dev/null || true
-
-    # Fix 2: Enable rofi toggling in all scripts so pressing hotkey toggles menu
-    local rofi_scripts=(
-        "$HYPR_DIR/scripts/rofi_launcher"
-        "$HYPR_DIR/scripts/rofi_runner"
-        "$HYPR_DIR/scripts/rofi_powermenu"
-        "$HYPR_DIR/scripts/rofi_screenshot"
-        "$HYPR_DIR/scripts/rofi_bluetooth"
-        "$HYPR_DIR/scripts/rofi_mpd"
-        "$HYPR_DIR/scripts/rofi_spotify"
-        "$HYPR_DIR/scripts/rofi_asroot"
-    )
-
-    for script in "${rofi_scripts[@]}"; do
-        if [[ -f "$script" ]] && ! grep -q 'pgrep -x "rofi"' "$script"; then
-            sed -i '2i\
-# Toggle rofi if already open\
-if pgrep -x "rofi" >/dev/null; then\
-\tpkill -x "rofi"\
-\texit 0\
-fi\
-' "$script"
+    # Setup Zsh & Oh-My-Zsh if enabled
+    if [[ "$INSTALL_SHELL_TUI" == true ]]; then
+        if [[ ! -d "$USER_HOME/.oh-my-zsh" ]]; then
+            log_info "Installing Oh-My-Zsh for $TARGET_USER..."
+            run_as_user sh -c 'RUNZSH=no CHSH=no sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"' || true
         fi
-    done
-
-    # Fix 3: Add keyboard backlight script if missing
-    if [[ ! -f "$HYPR_DIR/scripts/kbd_backlight" ]]; then
-        cat > "$HYPR_DIR/scripts/kbd_backlight" << 'EOF'
-#!/usr/bin/env bash
-iDIR="$HOME/.config/hypr/mako/icons"
-KBD_PATH=$(ls -d /sys/class/leds/*::kbd_backlight 2>/dev/null | head -n 1 || true)
-if [[ -z "$KBD_PATH" ]]; then exit 0; fi
-
-get_backlight() { cat "$KBD_PATH/brightness"; }
-get_max_backlight() { cat "$KBD_PATH/max_brightness"; }
-get_icon() {
-	backlight=$(get_backlight)
-	if [[ "$backlight" -eq 0 ]]; then icon="$iDIR"/brightness-20.png; else icon="$iDIR"/brightness-60.png; fi
-}
-notify_user() { notify-send -h string:x-canonical-private-synchronous:sys-notify-backlight -u low -i "$icon" "Keyboard Brightness : $(get_backlight)"; }
-inc_backlight() {
-	backlight=$(get_backlight); max=$(get_max_backlight); new=$(( backlight + 1 ))
-	[[ "$new" -gt "$max" ]] && new="$max"
-	echo "$new" > "$KBD_PATH/brightness"
-	get_icon && notify_user
-}
-dec_backlight() {
-	backlight=$(get_backlight); new=$(( backlight - 1 ))
-	[[ "$new" -lt 0 ]] && new=0
-	echo "$new" > "$KBD_PATH/brightness"
-	get_icon && notify_user
-}
-if [[ "$1" == '--inc' ]]; then inc_backlight; elif [[ "$1" == '--dec' ]]; then dec_backlight; else get_backlight; fi
-EOF
-        chmod +x "$HYPR_DIR/scripts/kbd_backlight"
+        [[ -f "$SRC_DIR/dotfiles/zsh/.zshrc" ]] && cp -f "$SRC_DIR/dotfiles/zsh/.zshrc" "$USER_HOME/.zshrc"
+        [[ -f "$SRC_DIR/dotfiles/zsh/.zprofile" ]] && cp -f "$SRC_DIR/dotfiles/zsh/.zprofile" "$USER_HOME/.zprofile"
+        run_root usermod -s /bin/zsh "$TARGET_USER" || true
     fi
 
-    # Fix 4: Set default terminal to Kitty in 60-key-bindings.conf
-    sed -i 's/^bind = SUPER,       Return, exec, $alacritty/#bind = SUPER,       Return, exec, $alacritty/' "$HYPR_DIR/config.d/60-key-bindings.conf" 2>/dev/null || true
-    sed -i 's/^#bind = SUPER,       Return, exec, $kitty/bind = SUPER,       Return, exec, $kitty/' "$HYPR_DIR/config.d/60-key-bindings.conf" 2>/dev/null || true
-    sed -i 's/^#bind = SUPER_SHIFT, Return, exec, $kitty -f/bind = SUPER_SHIFT, Return, exec, $kitty -f/' "$HYPR_DIR/config.d/60-key-bindings.conf" 2>/dev/null || true
-    sed -i 's/^#bind = SUPER_ALT,   Return, exec, $kitty -F/bind = SUPER_ALT,   Return, exec, $kitty -F/' "$HYPR_DIR/config.d/60-key-bindings.conf" 2>/dev/null || true
+    # Dynamic path normalization: rewrite /home/user -> $USER_HOME if username differs
+    if [[ "$USER_HOME" != "/home/user" ]]; then
+        log_info "Normalizing paths from /home/user to $USER_HOME..."
+        local files_to_rewrite=(
+            "$CONFIG_DIR/hypr/hyprlock.conf"
+            "$CONFIG_DIR/hypr/hyprpaper.conf"
+            "$CONFIG_DIR/hypr/hyprland.lua"
+            "$CONFIG_DIR/hyprcat/hyprlock.conf"
+            "$CONFIG_DIR/hyprcat/hyprpaper.conf"
+            "$CONFIG_DIR/hyprcat/hyprland.lua"
+            "$CONFIG_DIR/spicetify/config-xpui.ini"
+            "$USER_HOME/.zshrc"
+        )
+        for f in "${files_to_rewrite[@]}"; do
+            if [[ -f "$f" ]]; then
+                sed -i "s|/home/user|${USER_HOME}|g" "$f" || true
+            fi
+        done
+    fi
 
-    log_success "Tweaks and fixes applied."
+    # Ensure scripts are executable
+    chmod +x "$CONFIG_DIR"/hypr/scripts/* "$CONFIG_DIR"/hyprcat/scripts/* \
+        "$CONFIG_DIR"/hypr/theme/theme.sh "$CONFIG_DIR"/hyprcat/theme/theme.sh \
+        "$CONFIG_DIR"/hypr/waybar/lightmode || true
+
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$USER_HOME/Pictures" "$USER_HOME/boot-recovery" "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.zshrc" "$USER_HOME/.zprofile" || true
+
+    log_success "Dotfiles and application configs deployed."
 }
 
 # ------------------------------------------------------------------------------
-# 6. System Session Files & Pacman Hooks
+# 7. System Session Launchers, SDDM, GRUB & Services
 # ------------------------------------------------------------------------------
-install_system_files() {
-    log_section "Step 6: Installing System Session Launchers & Hooks"
+configure_system_and_services() {
+    log_section "Step 6: Configuring System Sessions, SDDM, GRUB & Services"
 
     local MISC_DIR="$SRC_DIR/misc"
 
-    # Install session launch scripts
-    log_info "Installing run-hyprland to /usr/local/bin..."
-    sudo cp -f "$MISC_DIR/run-hyprland" /usr/local/bin/run-hyprland
-    sudo cp -f "$MISC_DIR/run-hyprland-cat" /usr/local/bin/run-hyprland-cat
-    sudo chmod +x /usr/local/bin/run-hyprland /usr/local/bin/run-hyprland-cat
+    # Session launch scripts
+    run_root cp -f "$MISC_DIR/run-hyprland" /usr/local/bin/run-hyprland
+    run_root cp -f "$MISC_DIR/run-hyprland-cat" /usr/local/bin/run-hyprland-cat
 
-    # Install Wayland session desktop entries
-    log_info "Installing wayland session files to /usr/share/wayland-sessions..."
-    sudo mkdir -p /usr/share/wayland-sessions
-    sudo cp -f "$MISC_DIR/hyprland-cat.desktop" /usr/share/wayland-sessions/hyprland-cat.desktop
-    
-    if [[ -f /usr/share/wayland-sessions/hyprland.desktop ]]; then
-        sudo sed -i -e 's/^Exec=.*/Exec=run-hyprland/' /usr/share/wayland-sessions/hyprland.desktop
-    else
-        sudo tee /usr/share/wayland-sessions/hyprland.desktop > /dev/null << 'EOF'
+    # If NVIDIA was chosen, inject NVIDIA Wayland environment variables into run-hyprland
+    if [[ "$GPU_CHOICE" == "3" ]] && ! grep -q "LIBVA_DRIVER_NAME=nvidia" /usr/local/bin/run-hyprland; then
+        run_root sed -i '/^export XDG_SESSION_DESKTOP/a export LIBVA_DRIVER_NAME=nvidia\nexport GBM_BACKEND=nvidia-drm\nexport __GLX_VENDOR_LIBRARY_NAME=nvidia\nexport NVD_BACKEND=direct\nexport ELECTRON_OZONE_PLATFORM_HINT=auto' /usr/local/bin/run-hyprland
+    fi
+    run_root chmod +x /usr/local/bin/run-hyprland /usr/local/bin/run-hyprland-cat
+
+    # Wayland desktop sessions
+    run_root mkdir -p /usr/share/wayland-sessions
+    run_root cp -f "$MISC_DIR/hyprland-cat.desktop" /usr/share/wayland-sessions/hyprland-cat.desktop
+    run_root tee /usr/share/wayland-sessions/hyprland.desktop >/dev/null << 'EOF'
 [Desktop Entry]
 Name=Hyprland
 Comment=An intelligent dynamic tiling Wayland compositor
@@ -376,98 +614,135 @@ Type=Application
 DesktopNames=Hyprland
 Keywords=tiling;wayland;compositor;
 EOF
-    fi
 
-    # Install Pacman hooks
-    log_info "Installing Pacman hooks to /etc/pacman.d/hooks..."
-    sudo mkdir -p /etc/pacman.d/hooks
-    sudo cp -f "$MISC_DIR/archcraft-hook-hyprland.hook" /etc/pacman.d/hooks/
-    sudo cp -f "$MISC_DIR/archcraft-hook-hyprland-uwsm.hook" /etc/pacman.d/hooks/
+    # Pacman hooks
+    run_root mkdir -p /etc/pacman.d/hooks
+    run_root cp -f "$MISC_DIR/archcraft-hook-hyprland.hook" /etc/pacman.d/hooks/
+    run_root cp -f "$MISC_DIR/archcraft-hook-hyprland-uwsm.hook" /etc/pacman.d/hooks/
 
-    log_success "System session files and hooks installed."
-}
-
-# ------------------------------------------------------------------------------
-# 7. SDDM Display Manager & System Services
-# ------------------------------------------------------------------------------
-configure_services() {
-    log_section "Step 7: Configuring Display Manager & System Services"
-
-    # Configure SDDM
-    log_info "Configuring SDDM Theme (sddm-astronaut-theme)..."
-    sudo mkdir -p /etc/sddm.conf.d
-    sudo tee /etc/sddm.conf > /dev/null << 'EOF'
+    # SDDM Theme configuration
+    if [[ "$SDDM_CHOICE" == "1" ]]; then
+        log_info "Configuring SDDM with customized 'corners' theme..."
+        if [[ -d "$SRC_DIR/themes/sddm/corners" ]]; then
+            run_root mkdir -p /usr/share/sddm/themes/corners
+            run_root cp -rf "$SRC_DIR/themes/sddm/corners"/. /usr/share/sddm/themes/corners/
+        fi
+        run_root mkdir -p /etc/sddm.conf.d
+        run_root tee /etc/sddm.conf >/dev/null << 'EOF'
+[Theme]
+    Current=corners
+EOF
+        run_root tee /etc/sddm.conf.d/virtualkbd.conf >/dev/null << 'EOF'
+[General]
+    InputMethod=qtvirtualkeyboard
+EOF
+    elif [[ "$SDDM_CHOICE" == "2" ]]; then
+        log_info "Configuring SDDM with 'sddm-astronaut-theme'..."
+        run_root mkdir -p /etc/sddm.conf.d
+        run_root tee /etc/sddm.conf >/dev/null << 'EOF'
 [Theme]
     Current=sddm-astronaut-theme
 [General]
     InputMethod=qtvirtualkeyboard
 EOF
-
-    sudo tee /etc/sddm.conf.d/virtualkbd.conf > /dev/null << 'EOF'
+        run_root tee /etc/sddm.conf.d/virtualkbd.conf >/dev/null << 'EOF'
 [General]
     InputMethod=qtvirtualkeyboard
 EOF
+    fi
 
-    # Add user to required groups
-    log_info "Adding user '$CURRENT_USER' to video, input, and seat groups..."
-    sudo usermod -aG video,input "$CURRENT_USER" 2>/dev/null || true
+    # GRUB Theme configuration
+    if [[ "$INSTALL_GRUB_THEME" == true && -d "$SRC_DIR/themes/grub/Elegant-wave-window-right-dark" && -f /etc/default/grub ]]; then
+        log_info "Installing Elegant GRUB2 theme to /boot/grub/themes/..."
+        run_root mkdir -p /boot/grub/themes/Elegant-wave-window-right-dark
+        run_root cp -rf "$SRC_DIR/themes/grub/Elegant-wave-window-right-dark"/. /boot/grub/themes/Elegant-wave-window-right-dark/
 
-    # Enable essential services
-    log_info "Enabling systemd services (sddm, NetworkManager, bluetooth)..."
-    sudo systemctl enable sddm.service || true
-    sudo systemctl enable NetworkManager.service || true
-    sudo systemctl enable bluetooth.service || true
+        run_root cp -a /etc/default/grub "/etc/default/grub.bak-$(date +%Y%m%d-%H%M%S)"
+        run_root sed -i '/^#\?GRUB_THEME=/d' /etc/default/grub
+        run_root sed -i '/^#\?GRUB_BACKGROUND=/d' /etc/default/grub
+        run_root sed -i '/^#\?GRUB_DISABLE_OS_PROBER=/d' /etc/default/grub
+        run_root sed -i 's/^GRUB_GFXMODE=.*/GRUB_GFXMODE=1920x1080,auto/' /etc/default/grub
+        cat << 'EOF' | run_root tee -a /etc/default/grub >/dev/null
+GRUB_BACKGROUND="/boot/grub/themes/Elegant-wave-window-right-dark/background.jpg"
+GRUB_THEME="/boot/grub/themes/Elegant-wave-window-right-dark/theme.txt"
+GRUB_DISABLE_OS_PROBER=false
+EOF
+        if command -v grub-mkconfig &>/dev/null && [[ -d /boot/grub ]]; then
+            log_info "Regenerating /boot/grub/grub.cfg..."
+            run_root grub-mkconfig -o /boot/grub/grub.cfg || log_warn "grub-mkconfig returned non-zero; check bootloader configuration."
+        fi
+    fi
 
-    log_success "Display manager and services configured."
+    # Enable systemd services
+    log_info "Enabling systemd services..."
+    [[ "$SDDM_CHOICE" != "3" ]] && run_root systemctl enable sddm.service || true
+    run_root systemctl enable NetworkManager.service || true
+    run_root systemctl enable bluetooth.service || true
+    run_root systemctl enable power-profiles-daemon.service || true
+    run_root systemctl enable fstrim.timer || true
+
+    if [[ "$INSTALL_VIRT" == true ]]; then
+        run_root systemctl enable libvirtd.service || true
+        run_root usermod -aG libvirt "$TARGET_USER" || true
+    fi
+
+    log_success "System sessions, themes, and services configured."
 }
 
 # ------------------------------------------------------------------------------
-# 8. Permissions & Initial Theme Generation
+# 8. Optional Google Antigravity Setup & Final Theme Initialization
 # ------------------------------------------------------------------------------
 finalize_setup() {
-    log_section "Step 8: Finalizing Permissions & Initial Theme"
+    log_section "Step 7: Finalizing Theme & Optional Suites"
 
-    # Fix ownership of user files
-    log_info "Fixing file ownership for $CURRENT_USER..."
-    sudo chown -R "$CURRENT_USER:$CURRENT_USER" "$CONFIG_DIR" "$DATA_DIR" "$USER_HOME/.config-backups" 2>/dev/null || true
-
-    # Initialize Default Theme
-    log_info "Applying default theme via theme.sh..."
-    if [[ -x "$CONFIG_DIR/hypr/theme/theme.sh" ]]; then
-        bash "$CONFIG_DIR/hypr/theme/theme.sh" --default || true
+    if [[ "$INSTALL_ANTIGRAVITY" == true && -f "$SRC_DIR/setup-antigravity.sh" ]]; then
+        log_info "Running Google Antigravity & AI Agent setup..."
+        chmod +x "$SRC_DIR/setup-antigravity.sh"
+        run_as_user bash "$SRC_DIR/setup-antigravity.sh" || log_warn "Antigravity setup encountered a non-fatal warning."
     fi
 
-    # Set initial GTK settings
-    gsettings set org.gnome.desktop.interface gtk-theme 'Manhattan' 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme 'Luv-Folders-Dark' 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface cursor-theme 'Qogirr-Dark' 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface font-name 'Noto Sans 9' 2>/dev/null || true
-    gsettings set org.gnome.desktop.wm.preferences button-layout ":" 2>/dev/null || true
+    # Apply initial GTK settings
+    run_as_user gsettings set org.gnome.desktop.interface gtk-theme 'Manhattan' || true
+    run_as_user gsettings set org.gnome.desktop.interface icon-theme 'Luv-Folders-Dark' || true
+    run_as_user gsettings set org.gnome.desktop.interface cursor-theme 'Qogirr-Dark' || true
+    run_as_user gsettings set org.gnome.desktop.interface font-name 'Noto Sans 9' || true
+    run_as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
-    log_section "🎉 Installation & Configuration Complete!"
-    echo -e "${GREEN}${BOLD}You can now reboot your machine into Hyprland or start it immediately:${RESET}"
-    echo -e "  ${CYAN}• Reboot System:${RESET} sudo reboot"
-    echo -e "  ${CYAN}• Or Launch Hyprland:${RESET} run-hyprland"
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$DATA_DIR" "$USER_HOME/.config-backups" || true
+
+    set +x 2>/dev/null || true
+    log_section "Installation & Configuration Complete!"
+    echo -e "${GREEN}${BOLD}Your reproducible Arch Linux Hyprland setup is ready:${RESET}"
+    echo -e "  ${CYAN}• Full Install Log           :${RESET} $LOG_FILE"
+    echo -e "  ${CYAN}• Reboot into SDDM / Hyprland:${RESET} sudo reboot"
+    echo -e "  ${CYAN}• Launch Hyprland from TTY   :${RESET} run-hyprland"
+    echo -e "  ${CYAN}• Rollback / Clean Slate     :${RESET} $SRC_DIR/restore.sh"
+    echo -e "  ${CYAN}• Boot Recovery Script       :${RESET} $USER_HOME/boot-recovery/recover-boot.sh"
 }
 
 # ------------------------------------------------------------------------------
 # Main Execution
 # ------------------------------------------------------------------------------
 main() {
-    clear
     echo -e "${CYAN}${BOLD}"
     echo " ╔═══════════════════════════════════════════════════════════╗"
-    echo " ║     Arch Linux -> Aesthetic Hyprland Rice Setup Script    ║"
+    echo " ║   Arch Linux -> Aesthetic Hyprland Reproducible Builder   ║"
     echo " ╚═══════════════════════════════════════════════════════════╝"
     echo -e "${RESET}"
+    log_info "Verbose logging active. All output is also saved to: $LOG_FILE"
 
+    interactive_wizard
+
+    # Enable automatic verbose command tracing for all installation steps
+    export PS4=$'\033[2m+ [install:${FUNCNAME[0]:-main}:${LINENO}] \033[0m'
+    set -x
+
+    setup_user_account
     install_packages
     backup_existing
     install_assets
     deploy_dotfiles
-    apply_tweaks_and_fixes
-    install_system_files
-    configure_services
+    configure_system_and_services
     finalize_setup
 }
 

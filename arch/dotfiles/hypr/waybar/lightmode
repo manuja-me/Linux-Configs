@@ -15,10 +15,8 @@ fi
 apply_mode() {
 	if [[ `cat "$STATE_FILE"` = "dark" ]]; then
 		"$DIR"/theme/theme.sh --light
-		echo "light" > "$STATE_FILE"
 	else
 		"$DIR"/theme/theme.sh --default
-		echo "dark" > "$STATE_FILE"
 	fi
 }
 

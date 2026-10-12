@@ -19,3 +19,18 @@ undershoot.bottom,
 undershoot.left { 
 	background-image: none; 
 }
+
+/* Hide window control buttons */
+headerbar windowcontrols,
+headerbar .windowcontrols,
+headerbar button.minimize,
+headerbar button.maximize,
+headerbar button.close,
+.titlebar .left,
+.titlebar .right {
+    opacity: 0;
+    min-width: 0px;
+    min-height: 0px;
+    padding: 0px;
+    margin: 0px;
+}

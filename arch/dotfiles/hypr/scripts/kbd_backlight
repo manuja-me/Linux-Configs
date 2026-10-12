@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+iDIR="$HOME/.config/hypr/mako/icons"
+
+get_backlight() {
+	cat /sys/class/leds/asus::kbd_backlight/brightness
+}
+
+get_max_backlight() {
+	cat /sys/class/leds/asus::kbd_backlight/max_brightness
+}
+
+get_icon() {
+	backlight=$(get_backlight)
+	if [[ "$backlight" -eq 0 ]]; then
+		icon="$iDIR"/brightness-20.png
+	else
+		icon="$iDIR"/brightness-60.png
+	fi
+}
+
+notify_user() {
+	notify-send -h string:x-canonical-private-synchronous:sys-notify-backlight -u low -i "$icon" "Keyboard Brightness : $(get_backlight)"
+}
+
+inc_backlight() {
+	backlight=$(get_backlight)
+	max=$(get_max_backlight)
+	new=$(( backlight + 1 ))
+	[[ "$new" -gt "$max" ]] && new="$max"
+	echo "$new" > /sys/class/leds/asus::kbd_backlight/brightness
+	get_icon && notify_user
+}
+
+dec_backlight() {
+	backlight=$(get_backlight)
+	new=$(( backlight - 1 ))
+	[[ "$new" -lt 0 ]] && new=0
+	echo "$new" > /sys/class/leds/asus::kbd_backlight/brightness
+	get_icon && notify_user
+}
+
+if [[ "$1" == '--get' ]]; then
+	get_backlight
+elif [[ "$1" == '--inc' ]]; then
+	inc_backlight
+elif [[ "$1" == '--dec' ]]; then
+	dec_backlight
+else
+	get_backlight
+fi

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ -e /dev/tty ]]; then
+    exec </dev/tty
+fi
+
 echo "=========================================================="
 echo "  Google Antigravity Arch Linux Environment Setup"
 echo "=========================================================="
@@ -14,6 +18,10 @@ echo "==> Configuring environment for user: $TARGET_USER ($USER_HOME)"
 # 1. System Dependencies via pacman
 # -----------------------------------------------------------------------------
 echo "==> [1/7] Installing base system dependencies with pacman..."
+if [[ $EUID -ne 0 ]] && ! sudo -n true 2>/dev/null; then
+    echo "==> Sudo privileges required — please type your sudo password:"
+    sudo -v </dev/tty
+fi
 sudo pacman -S --needed --noconfirm \
     base-devel \
     git \

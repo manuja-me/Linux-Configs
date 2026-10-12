@@ -2,6 +2,12 @@
 
 ## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
 
+# If rofi is already running, close it (toggle)
+if pgrep -x "rofi" >/dev/null; then
+	pkill -x "rofi"
+	exit 0
+fi
+
 # Import Current Theme
 DIR="$HOME/.config/hypr"
 RASI="$DIR/rofi/launcher.rasi"

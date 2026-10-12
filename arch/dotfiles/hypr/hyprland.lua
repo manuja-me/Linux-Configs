@@ -5,6 +5,7 @@ local hyprDir = home .. "/.config/hypr"
 local scripts = hyprDir .. "/scripts"
 
 local alacritty       = scripts .. "/alacritty"
+local kitty           = scripts .. "/kitty"
 local files           = "thunar"
 local editor          = "geany"
 local browser         = "firefox"
@@ -22,6 +23,8 @@ local rofi_bluetooth  = scripts .. "/rofi_bluetooth"
 local rofi_powermenu  = scripts .. "/rofi_powermenu"
 local rofi_screenshot = scripts .. "/rofi_screenshot"
 local rofi_asroot     = scripts .. "/rofi_asroot"
+local rofi_clipboard  = scripts .. "/rofi_clipboard"
+local powerprofile    = scripts .. "/powerprofile"
 
 ------------------
 ---- MONITORS ----
@@ -30,7 +33,7 @@ hl.monitor({
     output   = "",
     mode     = "preferred",
     position = "auto",
-    scale    = "auto",
+    scale    = 1.0,
 })
 
 -------------------
@@ -218,7 +221,7 @@ hl.config({
         },
         groupbar = {
             enabled = true,
-            font_family = "RobotoMono Nerd Font",
+            font_family = "JetBrainsMono Nerd Font",
             font_size = 12,
             font_weight_active = "bold",
             font_weight_inactive = "normal",
@@ -300,8 +303,8 @@ hl.config({
         disable_splash_rendering = false,
         disable_scale_notification = false,
         col = { splash = "0xFFFFFF" },
-        font_family = "RobotoMono Nerd Font",
-        splash_font_family = "RobotoMono Nerd Font",
+        font_family = "JetBrainsMono Nerd Font",
+        splash_font_family = "JetBrainsMono Nerd Font",
         force_default_wallpaper = 0,
         vrr = 0,
         mouse_move_enables_dpms = false,
@@ -422,43 +425,42 @@ hl.animation({ leaf = "monitorAdded", enabled = true, speed = 10, bezier = "defa
 ------------------
 ---- GESTURES ----
 ------------------
--- 3-finger touchpad gestures for window navigation
+-- 4-finger touchpad gestures for window navigation
 hl.gesture({
-    fingers = 3,
+    fingers = 4,
     direction = "left",
     action = function()
         hl.exec_cmd("hyprctl dispatch movefocus l")
     end,
 })
 hl.gesture({
-    fingers = 3,
+    fingers = 4,
     direction = "right",
     action = function()
         hl.exec_cmd("hyprctl dispatch movefocus r")
     end,
 })
 hl.gesture({
-    fingers = 3,
+    fingers = 4,
     direction = "up",
     action = function()
         hl.exec_cmd("hyprctl dispatch movefocus u")
     end,
 })
 hl.gesture({
-    fingers = 3,
+    fingers = 4,
     direction = "down",
     action = function()
         hl.exec_cmd("hyprctl dispatch movefocus d")
     end,
 })
 
--- 3-finger window actions & modifiers
+-- 3-finger window actions & workspace swipe
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({ fingers = 3, direction = "vertical", action = "float" })
 hl.gesture({ fingers = 3, direction = "pinch", action = "fullscreen" })
 hl.gesture({ fingers = 3, direction = "swipe", mods = "SUPER", action = "resize" })
 hl.gesture({ fingers = 3, direction = "swipe", mods = "ALT", action = "move" })
-
--- 4-finger workspace swipe
-hl.gesture({ fingers = 4, direction = "horizontal", action = "workspace" })
 
 ----------------------
 ---- WINDOW RULES ----
@@ -489,14 +491,12 @@ hl.layer_rule({ match = { namespace = "notifications" }, animation = "slide" })
 ----------------------
 ---- KEYBINDINGS -----
 ----------------------
-local function dsp(cmd)
-    return hl.dsp.exec_raw("dispatch " .. cmd)
-end
+local notifycmd = "notify-send -h string:x-canonical-private-synchronous:hypr-cfg -u low "
 
--- Terminal
-hl.bind("SUPER + Return", hl.dsp.exec_cmd(alacritty))
-hl.bind("SUPER + SHIFT + Return", hl.dsp.exec_cmd(alacritty .. " -f"))
-hl.bind("SUPER + ALT + Return", hl.dsp.exec_cmd(alacritty .. " -F"))
+-- Terminal : kitty
+hl.bind("SUPER + Return", hl.dsp.exec_cmd(kitty))
+hl.bind("SUPER + SHIFT + Return", hl.dsp.exec_cmd(kitty .. " -f"))
+hl.bind("SUPER + ALT + Return", hl.dsp.exec_cmd(kitty .. " -F"))
 
 -- Apps
 hl.bind("SUPER + SHIFT + F", hl.dsp.exec_cmd(files))
@@ -518,6 +518,7 @@ hl.bind("SUPER + S", hl.dsp.exec_cmd(rofi_screenshot))
 -- Misc
 hl.bind("SUPER + P", hl.dsp.exec_cmd(colorpicker))
 hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind("SUPER + V", hl.dsp.exec_cmd(rofi_clipboard))
 
 -- Function keys
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(backlight .. " --inc"), { locked = true, repeating = true })
@@ -530,82 +531,107 @@ hl.bind("XF86AudioNext", hl.dsp.exec_cmd("mpc next"), { locked = true })
 hl.bind("XF86AudioPrev", hl.dsp.exec_cmd("mpc prev"), { locked = true })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("mpc toggle"), { locked = true })
 hl.bind("XF86AudioStop", hl.dsp.exec_cmd("mpc stop"), { locked = true })
+hl.bind("XF86Launch4", hl.dsp.exec_cmd("sh -c 'echo $(date +%T) >> /tmp/f5.log; " .. powerprofile .. " --cycle >> /tmp/f5.log 2>&1'"), { locked = true })
+hl.bind("XF86Launch3", hl.dsp.exec_cmd("sh -c 'echo $(date +%T) >> /tmp/f5.log; " .. powerprofile .. " --cycle >> /tmp/f5.log 2>&1'"), { locked = true })
+hl.bind("XF86Launch1", hl.dsp.exec_cmd("sh -c 'echo $(date +%T) >> /tmp/f5.log; " .. powerprofile .. " --cycle >> /tmp/f5.log 2>&1'"), { locked = true })
+hl.bind("SUPER + F5", hl.dsp.exec_cmd("sh -c 'echo $(date +%T) >> /tmp/f5.log; " .. powerprofile .. " --cycle >> /tmp/f5.log 2>&1'"))
 
 -- Screenshots
-hl.bind("Print", hl.dsp.exec_cmd(screenshot .. " --now"), { locked = true })
+hl.bind("Print", hl.dsp.exec_cmd(screenshot .. " --area"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd(screenshot .. " --in5"), { locked = true })
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd(screenshot .. " --in10"), { locked = true })
 hl.bind("CTRL + Print", hl.dsp.exec_cmd(screenshot .. " --win"))
-hl.bind("SUPER + Print", hl.dsp.exec_cmd(screenshot .. " --area"))
+hl.bind("SUPER + Print", hl.dsp.exec_cmd(screenshot .. " --now"), { locked = true })
 
 -- Window Management
-hl.bind("SUPER + C", dsp("killactive"))
-hl.bind("SUPER + Q", dsp("forcekillactive"))
-hl.bind("SUPER + Space", dsp("togglefloating"))
-hl.bind("SUPER + F", dsp("fullscreen 0"))
-hl.bind("SUPER + SHIFT + P", dsp("pin"))
-hl.bind("SUPER + Tab", dsp("cyclenext"))
-hl.bind("ALT + Tab", dsp("swapnext"))
-hl.bind("SUPER + SHIFT + Tab", dsp("focuscurrentorlast"))
-hl.bind("CTRL + ALT + Delete", dsp("exit"))
+hl.bind("SUPER + C", hl.dsp.window.close())
+hl.bind("SUPER + Q", hl.dsp.window.kill())
+hl.bind("SUPER + Space", hl.dsp.window.float({ action = "toggle" }))
+hl.bind("SUPER + F", hl.dsp.window.fullscreen_state({ internal = 2, client = 0, action = "toggle" }))
+hl.bind("SUPER + SHIFT + P", hl.dsp.window.pin())
+hl.bind("SUPER + Tab", hl.dsp.window.cycle_next())
+hl.bind("ALT + Tab", hl.dsp.window.swap({ next = true }))
+hl.bind("SUPER + SHIFT + Tab", hl.dsp.focus({ urgent_or_last = true }))
+hl.bind("CTRL + ALT + Delete", hl.dsp.exit())
 
 -- Focus
-hl.bind("SUPER + left", dsp("movefocus l"))
-hl.bind("SUPER + right", dsp("movefocus r"))
-hl.bind("SUPER + up", dsp("movefocus u"))
-hl.bind("SUPER + down", dsp("movefocus d"))
+hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
+hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }))
+hl.bind("SUPER + up", hl.dsp.focus({ direction = "up" }))
+hl.bind("SUPER + down", hl.dsp.focus({ direction = "down" }))
 
 -- Move Active
-hl.bind("SUPER + SHIFT + left", dsp("movewindow l"))
-hl.bind("SUPER + SHIFT + right", dsp("movewindow r"))
-hl.bind("SUPER + SHIFT + up", dsp("movewindow u"))
-hl.bind("SUPER + SHIFT + down", dsp("movewindow d"))
+hl.bind("SUPER + SHIFT + left", hl.dsp.window.move({ direction = "left" }))
+hl.bind("SUPER + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
+hl.bind("SUPER + SHIFT + up", hl.dsp.window.move({ direction = "up" }))
+hl.bind("SUPER + SHIFT + down", hl.dsp.window.move({ direction = "down" }))
 
 -- Resize Active
-hl.bind("SUPER + CTRL + left", dsp("resizeactive -20 0"), { repeating = true })
-hl.bind("SUPER + CTRL + right", dsp("resizeactive 20 0"), { repeating = true })
-hl.bind("SUPER + CTRL + up", dsp("resizeactive 0 -20"), { repeating = true })
-hl.bind("SUPER + CTRL + down", dsp("resizeactive 0 20"), { repeating = true })
+hl.bind("SUPER + CTRL + left", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), { repeating = true })
+hl.bind("SUPER + CTRL + right", hl.dsp.window.resize({ x = 20, y = 0, relative = true }), { repeating = true })
+hl.bind("SUPER + CTRL + up", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true })
+hl.bind("SUPER + CTRL + down", hl.dsp.window.resize({ x = 0, y = 20, relative = true }), { repeating = true })
 
 -- Move Active (Floating Only)
-hl.bind("SUPER + ALT + left", dsp("moveactive -20 0"), { repeating = true })
-hl.bind("SUPER + ALT + right", dsp("moveactive 20 0"), { repeating = true })
-hl.bind("SUPER + ALT + up", dsp("moveactive 0 -20"), { repeating = true })
-hl.bind("SUPER + ALT + down", dsp("moveactive 0 20"), { repeating = true })
+hl.bind("SUPER + ALT + left", hl.dsp.window.move({ x = -20, y = 0, relative = true }), { repeating = true })
+hl.bind("SUPER + ALT + right", hl.dsp.window.move({ x = 20, y = 0, relative = true }), { repeating = true })
+hl.bind("SUPER + ALT + up", hl.dsp.window.move({ x = 0, y = -20, relative = true }), { repeating = true })
+hl.bind("SUPER + ALT + down", hl.dsp.window.move({ x = 0, y = 20, relative = true }), { repeating = true })
 
 -- Workspaces 1..9
 for i = 1, 9 do
-    hl.bind("SUPER + " .. i, dsp("workspace " .. i))
-    hl.bind("SUPER + SHIFT + " .. i, dsp("movetoworkspace " .. i))
+    hl.bind("SUPER + " .. i, hl.dsp.focus({ workspace = i }))
+    hl.bind("SUPER + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
 end
 
 -- Special workspace
-hl.bind("SUPER + 0", dsp("togglespecialworkspace"))
-hl.bind("SUPER + SHIFT + 0", dsp("movetoworkspacesilent special"))
+hl.bind("SUPER + 0", hl.dsp.workspace.toggle_special("magic"))
+hl.bind("SUPER + SHIFT + 0", hl.dsp.window.move({ workspace = "special:magic", silent = true }))
 
 -- Seamless Workspace Switching
-hl.bind("CTRL + ALT + left", dsp("workspace e-1"))
-hl.bind("CTRL + ALT + right", dsp("workspace e+1"))
-hl.bind("CTRL + ALT + SHIFT + left", dsp("movetoworkspace e-1"))
-hl.bind("CTRL + ALT + SHIFT + right", dsp("movetoworkspace e+1"))
+hl.bind("CTRL + ALT + left", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind("CTRL + ALT + right", hl.dsp.focus({ workspace = "e+1" }))
+hl.bind("CTRL + ALT + SHIFT + left", hl.dsp.window.move({ workspace = "e-1" }))
+hl.bind("CTRL + ALT + SHIFT + right", hl.dsp.window.move({ workspace = "e+1" }))
 
 -- Groups
-hl.bind("SUPER + G", dsp("togglegroup"))
-hl.bind("SUPER + H", dsp("changegroupactive b"))
-hl.bind("SUPER + L", dsp("changegroupactive f"))
-hl.bind("SUPER + SHIFT + L", dsp("lockactivegroup toggle"))
-hl.bind("SUPER + ALT + M", dsp("moveoutofgroup"))
-hl.bind("SUPER + comma", dsp("movegroupwindow"))
-hl.bind("SUPER + period", dsp("movegroupwindow b"))
+hl.bind("SUPER + G", hl.dsp.group.toggle())
+hl.bind("SUPER + H", hl.dsp.group.prev())
+hl.bind("SUPER + L", hl.dsp.group.next())
+hl.bind("SUPER + SHIFT + L", hl.dsp.group.lock_active())
+hl.bind("SUPER + ALT + M", hl.dsp.window.move({ out_of_group = true }))
+hl.bind("SUPER + comma", hl.dsp.group.move_window({ next = true }))
+hl.bind("SUPER + period", hl.dsp.group.move_window({ prev = true }))
 
 -- Submaps
-hl.bind("SUPER + SHIFT + R", dsp("submap resize"))
-hl.bind("SUPER + SHIFT + M", dsp("submap move"))
+hl.bind("SUPER + SHIFT + R", hl.dsp.submap("resize"))
+hl.define_submap("resize", function()
+    hl.bind("right", hl.dsp.window.resize({ x = 20, y = 0, relative = true }), { repeating = true })
+    hl.bind("left", hl.dsp.window.resize({ x = -20, y = 0, relative = true }), { repeating = true })
+    hl.bind("up", hl.dsp.window.resize({ x = 0, y = -20, relative = true }), { repeating = true })
+    hl.bind("down", hl.dsp.window.resize({ x = 0, y = 20, relative = true }), { repeating = true })
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
+
+hl.bind("SUPER + SHIFT + M", hl.dsp.submap("move"))
+hl.define_submap("move", function()
+    hl.bind("right", hl.dsp.window.move({ direction = "right" }), { repeating = true })
+    hl.bind("left", hl.dsp.window.move({ direction = "left" }), { repeating = true })
+    hl.bind("up", hl.dsp.window.move({ direction = "up" }), { repeating = true })
+    hl.bind("down", hl.dsp.window.move({ direction = "down" }), { repeating = true })
+    hl.bind("escape", hl.dsp.submap("reset"))
+end)
 
 -- Mouse
-hl.bind("SUPER + mouse_down", dsp("workspace e-1"))
-hl.bind("SUPER + mouse_up", dsp("workspace e+1"))
+hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("SUPER + Control_R", hl.dsp.window.drag(), { mouse = true })
 hl.bind("SUPER + ALT_R", hl.dsp.window.resize(), { mouse = true })
+
+-- Switches
+hl.bind("switch:Lid Switch", hl.dsp.exec_cmd("hyprlock"), { locked = true })
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprctl keyword monitor 'eDP-1, disable'"), { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"preferred\", position = \"auto\", scale = 1.0 })'"), { locked = true })
+

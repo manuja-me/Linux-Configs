@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+# Toggle rofi if already open
+if pgrep -x "rofi" >/dev/null; then
+	pkill -x "rofi"
+	exit 0
+fi
+
+
 # Import Current Theme
 DIR="$HOME/.config/hypr"
 RASI="$DIR/rofi/asroot.rasi"
@@ -9,7 +16,7 @@ USER=`whoami`
 # Theme Elements
 prompt='Root'
 mesg='Run Applications As Root'
-term="alacritty --class alacritty-float,alacritty-float --config-file /home/$USER/.config/hypr/alacritty/alacritty.toml"
+term="kitty --class kitty-float --config /home/$USER/.config/hypr/kitty/kitty.conf"
 
 # Options
 layout=`cat ${RASI} | grep 'USE_ICON' | cut -d'=' -f2`

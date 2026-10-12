@@ -27,11 +27,17 @@ color15='#e0e5e5'
 # Wallpaper
 wallpaper="$HOME/.config/hypr/wallpapers/wallpaper.png"
 
-# GTK Theme
+# GTK / Window Theme
 gtk_theme='Manhattan'
 gtk_icons='Luv-Folders-Dark'
 gtk_font='Noto Sans 9'
 cursor_theme='Qogirr-Dark'
+color_scheme='prefer-dark'
+prefer_dark='1'
+prefer_dark_bool='true'
+qt_color_scheme='/usr/share/qt5ct/colors/darker.conf'
+kde_color_scheme='BreezeDark'
+kde_name='Breeze Dark'
 
 # Geany
 geany_colors='manhattan.conf'

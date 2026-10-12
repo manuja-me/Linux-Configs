@@ -1,0 +1,13 @@
+# Yazi Theme Customization
+# Clean rectangular blocks (zero rounded, no triangles/arrows)
+
+[indicator]
+padding = { open = "", close = "" }
+
+[status]
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+
+[tabs]
+sep_inner = { open = "", close = "" }
+sep_outer = { open = "", close = "" }

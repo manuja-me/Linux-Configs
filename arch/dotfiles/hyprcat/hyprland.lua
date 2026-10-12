@@ -220,7 +220,7 @@ hl.config({
         },
         groupbar = {
             enabled = true,
-            font_family = "RobotoMono Nerd Font",
+            font_family = "JetBrainsMono Nerd Font",
             font_size = 12,
             font_weight_active = "bold",
             font_weight_inactive = "normal",
@@ -302,8 +302,8 @@ hl.config({
         disable_splash_rendering = false,
         disable_scale_notification = false,
         col = { splash = "0xFFFFFF" },
-        font_family = "RobotoMono Nerd Font",
-        splash_font_family = "RobotoMono Nerd Font",
+        font_family = "JetBrainsMono Nerd Font",
+        splash_font_family = "JetBrainsMono Nerd Font",
         force_default_wallpaper = 0,
         vrr = 0,
         mouse_move_enables_dpms = false,
@@ -534,11 +534,11 @@ hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("mpc toggle"), { locked = true })
 hl.bind("XF86AudioStop", hl.dsp.exec_cmd("mpc stop"), { locked = true })
 
 -- Screenshots
-hl.bind("Print", hl.dsp.exec_cmd(screenshot .. " --now"), { locked = true })
+hl.bind("Print", hl.dsp.exec_cmd(screenshot .. " --area"))
 hl.bind("ALT + Print", hl.dsp.exec_cmd(screenshot .. " --in5"), { locked = true })
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd(screenshot .. " --in10"), { locked = true })
 hl.bind("CTRL + Print", hl.dsp.exec_cmd(screenshot .. " --win"))
-hl.bind("SUPER + Print", hl.dsp.exec_cmd(screenshot .. " --area"))
+hl.bind("SUPER + Print", hl.dsp.exec_cmd(screenshot .. " --now"), { locked = true })
 
 -- Window Management
 hl.bind("SUPER + C", dsp("killactive"))

@@ -147,7 +147,7 @@
     },
 
     "custom/menu": {
-         "format": "",
+         "format": "",
          "tooltip": false,
          //"on-click": "$HOME/.config/hypr/scripts/wofi_menu",
          "on-click": "$HOME/.config/hypr/scripts/rofi_launcher",
@@ -261,6 +261,7 @@
         "format-disabled": "Disabled",
         "format-alt": " {bandwidthUpBits} |  {bandwidthDownBits}",
         "tooltip-format": " {ifname} via {gwaddr}",
+        "on-click": "~/.config/hypr/scripts/rofi_network",
     },
 
 	// waybar-pulseaudio
@@ -311,7 +312,7 @@
 
 	// hyprland-workspaces
     "hyprland/workspaces": {
-         "format": "{icon}",
+         "format": "{name}",
          "sort-by-number": true,
          "active-only": false,
          "format-icons": {

@@ -27,11 +27,17 @@ color15='#909090'
 # Wallpaper
 wallpaper="$HOME/.config/hypr/wallpapers/light.jpg"
 
-# GTK Theme
+# GTK / Window Theme
 gtk_theme='White'
 gtk_icons='Luv-Folders'
 gtk_font='Noto Sans 9'
 cursor_theme='Qogirr-Dark'
+color_scheme='prefer-light'
+prefer_dark='0'
+prefer_dark_bool='false'
+qt_color_scheme='/usr/share/qt5ct/colors/airy.conf'
+kde_color_scheme='BreezeLight'
+kde_name='Breeze Light'
 
 # Geany
 geany_colors='slime.conf'
