@@ -3,7 +3,7 @@
 # Arch Linux TTY Cloud Bootstrapper (1-Command curl | sh Entrypoint)
 # ==============================================================================
 # Usage from fresh minimal Arch Linux TTY:
-#   curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/manuja-me/Linux-Configs/main/arch/bootstrap.sh | bash
 # ==============================================================================
 
 set -Eeuo pipefail
@@ -13,7 +13,7 @@ if [[ -e /dev/tty ]]; then
     exec </dev/tty
 fi
 
-REPO_URL="${REPO_URL:-https://github.com/manuja-me/nixos-config.git}"
+REPO_URL="${REPO_URL:-https://github.com/manuja-me/Linux-Configs.git}"
 REPO_BRANCH="${REPO_BRANCH:-main}"
 
 BOLD="\033[1m"

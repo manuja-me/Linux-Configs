@@ -27,14 +27,14 @@ This guide walks you through transforming a **fresh barebone Arch Linux installa
 From a **fresh minimal Arch Linux TTY** (logged in as `root` or your user with network connected):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/manuja-me/Linux-Configs/main/arch/bootstrap.sh | bash
 ```
 
 ### Order of Execution on a Fresh Minimal Arch Build:
 1. **Install Minimal Base Arch**: Boot Arch ISO → run `archinstall` (select `Minimal` profile, `NetworkManager`, `grub` bootloader) → reboot into fresh TTY.
 2. **Connect Network (if using Wi-Fi)**: Run `nmtui` or `nmcli device wifi connect <SSID> password <PASS>`.
 3. **Run Cloud Bootstrap Command**: Execute the `curl ... | bash` command above.
-   - `bootstrap.sh` attaches `/dev/tty` for interactive password/prompt input, installs `git`, `base-devel`, `curl`, `sudo`, `rsync`, clones `manuja-me/nixos-config` into `~/nixos-config`, and launches `arch/install.sh`.
+   - `bootstrap.sh` attaches `/dev/tty` for interactive password/prompt input, installs `git`, `base-devel`, `curl`, `sudo`, `rsync`, clones `manuja-me/Linux-Configs` into `~/nixos-config`, and launches `arch/install.sh`.
 4. **Answer Interactive Prompts & Sudo Password**:
    - **Target Username**: Uses your current user or creates a new user account (`wheel`, `video`, `input` groups + sudo access). Prompts for your `sudo` (or `root` via `su`) password whenever privileges are needed along the way.
    - **GPU Drivers**: Choose `1) Intel`, `2) AMD`, `3) NVIDIA`, or `4) VM/Skip`.
@@ -47,7 +47,7 @@ curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bo
 
 > **Unattended Mode**: To skip all prompts and install everything with default live-system settings:
 > ```bash
-> curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash -s -- --defaults
+> curl -fsSL https://raw.githubusercontent.com/manuja-me/Linux-Configs/main/arch/bootstrap.sh | bash -s -- --defaults
 > ```
 
 ---

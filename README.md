@@ -63,12 +63,12 @@ Transforms a fresh, minimal barebone Arch Linux TTY installation into this exact
 
 **1-Command Install from Fresh Arch TTY:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/manuja-me/nixos-config/main/arch/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/manuja-me/Linux-Configs/main/arch/bootstrap.sh | bash
 ```
 
 **Or Manual Clone & Install:**
 ```bash
-git clone https://github.com/manuja-me/nixos-config.git ~/nixos-config
+git clone https://github.com/manuja-me/Linux-Configs.git ~/nixos-config
 cd ~/nixos-config/arch
 ./install.sh
 ```
