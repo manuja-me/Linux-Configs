@@ -272,11 +272,22 @@ setup_user_account() {
 # 3. Package Management & Dependencies
 # ------------------------------------------------------------------------------
 install_packages() {
-    log_section "Step 2: Installing System & Desktop Packages"
+    log_section "Step 2: Optimizing Pacman & Installing System/Desktop Packages"
+
+    # 1. Enable Color and ParallelDownloads = 5 in /etc/pacman.conf for 5x faster package downloads
+    if [[ -f /etc/pacman.conf ]]; then
+        log_info "Enabling Color and ParallelDownloads = 5 in /etc/pacman.conf..."
+        run_root sed -i 's/^#Color/Color/' /etc/pacman.conf
+        if grep -q '^#\?ParallelDownloads' /etc/pacman.conf; then
+            run_root sed -i 's/^#\?ParallelDownloads.*/ParallelDownloads = 5/' /etc/pacman.conf
+        else
+            run_root sed -i '/^\[options\]/a ParallelDownloads = 5' /etc/pacman.conf
+        fi
+    fi
 
     local pacman_pkgs=(
-        # Core Build & System Utilities
-        base-devel git curl wget rsync unzip unrar 7zip
+        # Core Build, ZRAM & System Utilities
+        base-devel git curl wget rsync unzip unrar 7zip zram-generator
         xdg-user-dirs xdg-utils gvfs polkit-gnome polkit-kde-agent
 
         # Wayland & Hyprland Core
@@ -368,6 +379,12 @@ install_packages() {
     log_info "Installing official repository packages via pacman..."
     run_root pacman -Sy --needed --noconfirm "${pacman_pkgs[@]}"
 
+    # Initialize Rust stable toolchain if rustup was installed (prevents cargo/AUR build failures)
+    if command -v rustup &>/dev/null; then
+        log_info "Initializing default stable Rust toolchain for $TARGET_USER..."
+        run_as_user rustup default stable || true
+    fi
+
     # Install or detect AUR helper (yay)
     local aur_helper=""
     if command -v yay &>/dev/null; then
@@ -389,6 +406,13 @@ install_packages() {
     ensure_sudo
     run_as_user "$aur_helper" -S --needed --noconfirm "${aur_pkgs[@]}" || log_warn "Some optional AUR packages could not be built; continuing..."
 
+    # Grant write permissions on /opt/spotify so Spicetify can apply themes without root errors
+    if [[ -d /opt/spotify ]]; then
+        log_info "Granting user write permissions on /opt/spotify for Spicetify..."
+        run_root chmod a+wr /opt/spotify
+        [[ -d /opt/spotify/Apps ]] && run_root chmod -R a+wr /opt/spotify/Apps || true
+    fi
+
     log_success "Package installation complete."
 }
 
@@ -405,6 +429,7 @@ backup_existing() {
         "$CONFIG_DIR/kitty"
         "$CONFIG_DIR/alacritty"
         "$CONFIG_DIR/gtk-3.0"
+        "$CONFIG_DIR/gtk-4.0"
         "$CONFIG_DIR/geany"
         "$CONFIG_DIR/ncmpcpp"
         "$CONFIG_DIR/ranger"
@@ -521,16 +546,37 @@ EOF
         fi
     done
 
-    # Deploy misc configs (gtk-3.0, .gtkrc-2.0, geany, ncmpcpp, ranger, mimeapps, xdg-terminals)
-    mkdir -p "$CONFIG_DIR/gtk-3.0" "$CONFIG_DIR/geany" "$CONFIG_DIR/ncmpcpp" "$CONFIG_DIR/ranger"
+    # Deploy misc configs (gtk-3.0, gtk-4.0, .gtkrc-2.0, geany, ncmpcpp, ranger, mimeapps, xdg-terminals, transmission wrapper)
+    mkdir -p "$CONFIG_DIR/gtk-3.0" "$CONFIG_DIR/gtk-4.0" "$CONFIG_DIR/geany" "$CONFIG_DIR/ncmpcpp" "$CONFIG_DIR/ranger" "$USER_HOME/.local/bin"
     [[ -f "$SRC_DIR/misc/.gtkrc-2.0" ]] && cp -f "$SRC_DIR/misc/.gtkrc-2.0" "$USER_HOME/.gtkrc-2.0"
     [[ -f "$SRC_DIR/misc/gtk-3.0/gtk.css" ]] && cp -f "$SRC_DIR/misc/gtk-3.0/gtk.css" "$CONFIG_DIR/gtk-3.0/"
     [[ -f "$SRC_DIR/misc/gtk-3.0/settings.ini" ]] && cp -f "$SRC_DIR/misc/gtk-3.0/settings.ini" "$CONFIG_DIR/gtk-3.0/"
+    [[ -f "$SRC_DIR/misc/gtk-4.0/settings.ini" ]] && cp -f "$SRC_DIR/misc/gtk-4.0/settings.ini" "$CONFIG_DIR/gtk-4.0/"
     [[ -f "$SRC_DIR/misc/xdg-terminals.list" ]] && cp -f "$SRC_DIR/misc/xdg-terminals.list" "$CONFIG_DIR/xdg-terminals.list"
     [[ -f "$SRC_DIR/misc/mimeapps.list" ]] && cp -f "$SRC_DIR/misc/mimeapps.list" "$CONFIG_DIR/mimeapps.list"
+    if [[ -f "$SRC_DIR/misc/transmission-qt" ]]; then
+        cp -pf "$SRC_DIR/misc/transmission-qt" "$USER_HOME/.local/bin/transmission-qt"
+        chmod +x "$USER_HOME/.local/bin/transmission-qt"
+    fi
     [[ -d "$SRC_DIR/misc/geany" ]] && cp -rf "$SRC_DIR/misc/geany"/* "$CONFIG_DIR/geany/"
     [[ -d "$SRC_DIR/misc/ncmpcpp" ]] && cp -rf "$SRC_DIR/misc/ncmpcpp"/* "$CONFIG_DIR/ncmpcpp/"
     [[ -d "$SRC_DIR/misc/ranger" ]] && cp -rf "$SRC_DIR/misc/ranger"/* "$CONFIG_DIR/ranger/"
+
+    # Deploy extra wallpapers to ~/Pictures/wallpapers (used by theme.sh --pywal & .zshrc aliases)
+    if [[ -d "$SRC_DIR/dotfiles/wallpapers" ]]; then
+        mkdir -p "$USER_HOME/Pictures/wallpapers"
+        cp -rf "$SRC_DIR/dotfiles/wallpapers"/. "$USER_HOME/Pictures/wallpapers/"
+    fi
+
+    # Deploy bundled Antigravity custom skills & plugins
+    if [[ -d "$SRC_DIR/dotfiles/antigravity/skills" ]]; then
+        mkdir -p "$USER_HOME/.gemini/config/skills"
+        cp -rf "$SRC_DIR/dotfiles/antigravity/skills"/. "$USER_HOME/.gemini/config/skills/"
+    fi
+    if [[ -d "$SRC_DIR/dotfiles/antigravity/plugins" ]]; then
+        mkdir -p "$USER_HOME/.gemini/config/plugins"
+        cp -rf "$SRC_DIR/dotfiles/antigravity/plugins"/. "$USER_HOME/.gemini/config/plugins/"
+    fi
 
     # Environment variables
     mkdir -p "$CONFIG_DIR/environment.d"
@@ -579,16 +625,16 @@ EOF
         "$CONFIG_DIR"/hypr/theme/theme.sh "$CONFIG_DIR"/hyprcat/theme/theme.sh \
         "$CONFIG_DIR"/hypr/waybar/lightmode || true
 
-    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$USER_HOME/Pictures" "$USER_HOME/boot-recovery" "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.zshrc" "$USER_HOME/.zprofile" || true
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$USER_HOME/Pictures" "$USER_HOME/boot-recovery" "$USER_HOME/.local" "$USER_HOME/.gemini" "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.zshrc" "$USER_HOME/.zprofile" || true
 
     log_success "Dotfiles and application configs deployed."
 }
 
 # ------------------------------------------------------------------------------
-# 7. System Session Launchers, SDDM, GRUB & Services
+# 7. System Session Launchers, SDDM, GRUB, ZRAM & Services
 # ------------------------------------------------------------------------------
 configure_system_and_services() {
-    log_section "Step 6: Configuring System Sessions, SDDM, GRUB & Services"
+    log_section "Step 6: Configuring System Sessions, SDDM, GRUB, ZRAM & Services"
 
     local MISC_DIR="$SRC_DIR/misc"
 
@@ -619,6 +665,17 @@ EOF
     run_root mkdir -p /etc/pacman.d/hooks
     run_root cp -f "$MISC_DIR/archcraft-hook-hyprland.hook" /etc/pacman.d/hooks/
     run_root cp -f "$MISC_DIR/archcraft-hook-hyprland-uwsm.hook" /etc/pacman.d/hooks/
+
+    # Configure ZRAM swap (/etc/systemd/zram-generator.conf)
+    log_info "Configuring ZRAM swap (/etc/systemd/zram-generator.conf)..."
+    run_root mkdir -p /etc/systemd
+    run_root tee /etc/systemd/zram-generator.conf >/dev/null << 'EOF'
+[zram0]
+zram-size = 7803
+compression-algorithm = lz4
+EOF
+    run_root systemctl daemon-reload || true
+    run_root systemctl start systemd-zram-setup@zram0.service || true
 
     # SDDM Theme configuration
     if [[ "$SDDM_CHOICE" == "1" ]]; then
@@ -673,7 +730,7 @@ EOF
         fi
     fi
 
-    # Enable systemd services
+    # Enable systemd system & user services
     log_info "Enabling systemd services..."
     [[ "$SDDM_CHOICE" != "3" ]] && run_root systemctl enable sddm.service || true
     run_root systemctl enable NetworkManager.service || true
@@ -681,12 +738,15 @@ EOF
     run_root systemctl enable power-profiles-daemon.service || true
     run_root systemctl enable fstrim.timer || true
 
+    # Enable PipeWire user sockets for target user
+    run_as_user systemctl --user enable pipewire.socket pipewire-pulse.socket wireplumber.service || true
+
     if [[ "$INSTALL_VIRT" == true ]]; then
         run_root systemctl enable libvirtd.service || true
         run_root usermod -aG libvirt "$TARGET_USER" || true
     fi
 
-    log_success "System sessions, themes, and services configured."
+    log_success "System sessions, themes, ZRAM, and services configured."
 }
 
 # ------------------------------------------------------------------------------
@@ -708,7 +768,7 @@ finalize_setup() {
     run_as_user gsettings set org.gnome.desktop.interface font-name 'Noto Sans 9' || true
     run_as_user gsettings set org.gnome.desktop.wm.preferences button-layout ":" || true
 
-    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$DATA_DIR" "$USER_HOME/.config-backups" || true
+    run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$DATA_DIR" "$USER_HOME/.config-backups" "$USER_HOME/.gemini" "$USER_HOME/.local" || true
 
     set +x 2>/dev/null || true
     log_section "Installation & Configuration Complete!"
@@ -718,6 +778,15 @@ finalize_setup() {
     echo -e "  ${CYAN}• Launch Hyprland from TTY   :${RESET} run-hyprland"
     echo -e "  ${CYAN}• Rollback / Clean Slate     :${RESET} $SRC_DIR/restore.sh"
     echo -e "  ${CYAN}• Boot Recovery Script       :${RESET} $USER_HOME/boot-recovery/recover-boot.sh"
+    echo ""
+    echo -e "${YELLOW}${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}"
+    echo -e "${YELLOW}${BOLD}║        IMPORTANT: MANUAL POST-INSTALL SENSITIVE SETUP        ║${RESET}"
+    echo -e "${YELLOW}${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
+    echo -e "  Refer to ${BOLD}$SRC_DIR/README.md${RESET} for step-by-step instructions to manually configure:"
+    echo -e "  ${YELLOW}1. SSH Keys & GitHub Auth :${RESET} ssh-keygen -t ed25519 / gh auth login"
+    echo -e "  ${YELLOW}2. Git Global Identity    :${RESET} git config --global user.name & user.email"
+    echo -e "  ${YELLOW}3. GPG Keys & API Tokens  :${RESET} Import sensitive keys & AI provider credentials"
+    echo -e "  ${YELLOW}4. Antigravity Skills List:${RESET} Full inventory of your custom skills & plugins in README.md"
 }
 
 # ------------------------------------------------------------------------------

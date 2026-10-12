@@ -174,7 +174,7 @@ clean_arch_slate() {
     mkdir -p "$safety_bk"
     local rice_configs=(
         hypr hyprcat kitty alacritty waybar rofi mako wlogout wofi
-        gtk-3.0 geany ncmpcpp ranger nvim yazi btop cava mpv
+        gtk-3.0 gtk-4.0 geany ncmpcpp ranger nvim yazi btop cava mpv
         qt5ct spicetify Thunar viewnior xarchiver fontconfig
     )
     for cfg in "${rice_configs[@]}"; do
@@ -191,7 +191,7 @@ clean_arch_slate() {
         rm -rf "${CONFIG_DIR:?}/$cfg"
     done
     rm -f "$CONFIG_DIR/environment.d/10-terminal.conf" "$CONFIG_DIR/xdg-terminals.list"
-    rm -f "$USER_HOME/.gtkrc-2.0"
+    rm -f "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.local/bin/transmission-qt"
     rm -rf "$DATA_DIR/themes/Manhattan" "$DATA_DIR/themes/Catppuccin-Mocha" "$DATA_DIR/themes/White"
     rm -rf "$DATA_DIR/icons/Luv-Folders" "$DATA_DIR/icons/Luv-Folders-Dark" "$DATA_DIR/icons/Archcraft" "$DATA_DIR/icons/Archcraft-Dark"
     rm -rf "$DATA_DIR/icons/Qogirr" "$DATA_DIR/icons/Qogirr-Dark" "$DATA_DIR/icons/Sweet"
@@ -201,6 +201,7 @@ clean_arch_slate() {
     run_root rm -f /usr/local/bin/run-hyprland /usr/local/bin/run-hyprland-cat
     run_root rm -f /usr/share/wayland-sessions/hyprland-cat.desktop
     run_root rm -f /etc/pacman.d/hooks/archcraft-hook-hyprland.hook /etc/pacman.d/hooks/archcraft-hook-hyprland-uwsm.hook
+    run_root rm -f /etc/systemd/zram-generator.conf
 
     # 4. Disable SDDM & revert SDDM config
     log_info "Disabling SDDM and reverting SDDM config (returning to clean TTY login)..."

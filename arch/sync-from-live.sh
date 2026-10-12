@@ -65,13 +65,31 @@ for app in "${APP_DIRS[@]}"; do
     fi
 done
 
-# 4. Misc GTK, Ranger, Geany, Ncmpcpp & XDG configs
-mkdir -p "${SCRIPT_DIR}/misc/gtk-3.0"
+# 4. Misc GTK2/3/4, Ranger, Geany, Ncmpcpp, Transmission wrapper & XDG configs
+mkdir -p "${SCRIPT_DIR}/misc/gtk-3.0" "${SCRIPT_DIR}/misc/gtk-4.0"
 [[ -f "${LIVE_HOME}/.gtkrc-2.0" ]] && cp -f "${LIVE_HOME}/.gtkrc-2.0" "${SCRIPT_DIR}/misc/.gtkrc-2.0"
 [[ -f "${LIVE_CONFIG}/gtk-3.0/gtk.css" ]] && cp -f "${LIVE_CONFIG}/gtk-3.0/gtk.css" "${SCRIPT_DIR}/misc/gtk-3.0/gtk.css"
 [[ -f "${LIVE_CONFIG}/gtk-3.0/settings.ini" ]] && cp -f "${LIVE_CONFIG}/gtk-3.0/settings.ini" "${SCRIPT_DIR}/misc/gtk-3.0/settings.ini"
+[[ -f "${LIVE_CONFIG}/gtk-4.0/settings.ini" ]] && cp -f "${LIVE_CONFIG}/gtk-4.0/settings.ini" "${SCRIPT_DIR}/misc/gtk-4.0/settings.ini"
 [[ -f "${LIVE_CONFIG}/xdg-terminals.list" ]] && cp -f "${LIVE_CONFIG}/xdg-terminals.list" "${SCRIPT_DIR}/misc/xdg-terminals.list"
 [[ -f "${LIVE_CONFIG}/mimeapps.list" ]] && cp -f "${LIVE_CONFIG}/mimeapps.list" "${SCRIPT_DIR}/misc/mimeapps.list"
+[[ -f "${LIVE_HOME}/.local/bin/transmission-qt" ]] && cp -pf "${LIVE_HOME}/.local/bin/transmission-qt" "${SCRIPT_DIR}/misc/transmission-qt"
+
+# Extra Wallpapers from ~/Pictures/wallpapers
+if [[ -d "${LIVE_HOME}/Pictures/wallpapers" ]]; then
+    mkdir -p "${SCRIPT_DIR}/dotfiles/wallpapers"
+    rsync -a --delete "${LIVE_HOME}/Pictures/wallpapers/" "${SCRIPT_DIR}/dotfiles/wallpapers/"
+fi
+
+# Antigravity Custom Skills & Plugins
+if [[ -d "${LIVE_HOME}/.gemini/config/skills" ]]; then
+    mkdir -p "${SCRIPT_DIR}/dotfiles/antigravity/skills"
+    rsync -a --delete --exclude='.git' --exclude='test.txt' "${LIVE_HOME}/.gemini/config/skills/" "${SCRIPT_DIR}/dotfiles/antigravity/skills/"
+fi
+if [[ -d "${LIVE_HOME}/.gemini/config/plugins" ]]; then
+    mkdir -p "${SCRIPT_DIR}/dotfiles/antigravity/plugins"
+    rsync -a --delete --exclude='.git' "${LIVE_HOME}/.gemini/config/plugins/" "${SCRIPT_DIR}/dotfiles/antigravity/plugins/"
+fi
 
 for misc_app in geany ncmpcpp ranger; do
     if [[ -d "${LIVE_CONFIG}/${misc_app}" ]]; then

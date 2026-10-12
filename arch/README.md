@@ -414,7 +414,7 @@ Make sure only `xdg-desktop-portal-hyprland` and `xdg-desktop-portal-gtk` are in
 
 ## 🤖 Google Antigravity & AI Agent Setup
 
-To configure an identical **Google Antigravity** environment on your Arch Linux system—complete with integrated memory recall, context optimization, skills, and plugins—use the included automated script:
+To configure an identical **Google Antigravity** environment on your Arch Linux system—complete with integrated memory recall, context optimization, skills, and plugins—use the included automated script (or select **Y** during the interactive `install.sh` wizard, which also restores synced skills and plugins from `arch/dotfiles/antigravity/`):
 
 ```bash
 chmod +x setup-antigravity.sh
@@ -451,6 +451,127 @@ headroom    stdio  enabled  headroom mcp serve
 
 ---
 
+## 🧠 Complete Antigravity Skills & Plugins Inventory
+
+All custom skills and plugins currently active on this Linux Antigravity setup are documented below AND backed up directly inside [`arch/dotfiles/antigravity/`](dotfiles/antigravity) (automatically restored by `install.sh` when the Antigravity bundle is enabled, or copied manually via the commands below).
+
+### 1. Standalone User Skills (`~/.gemini/config/skills/`)
+
+| Skill Name | Path | Purpose / Trigger | Source / Manual Install |
+| :--- | :--- | :--- | :--- |
+| **`canvas-design`** | `~/.gemini/config/skills/canvas-design/SKILL.md` | Create visual art, illustrations, vector graphics, and posters in SVG, HTML5 Canvas, `.png`, and `.pdf` using deliberate design philosophies. | Backed up in `arch/dotfiles/antigravity/skills/canvas-design` |
+| **`chisle`** | `~/.gemini/config/skills/chisle/SKILL.md` | **Mandatory Always-On Efficiency Mode**: Enforces terse high-signal prose, zero fluff, YAGNI Efficiency Ladder code decisions, and context diet. | Backed up in `arch/dotfiles/antigravity/skills/chisle` |
+| **`chisle-audit`** | `~/.gemini/config/skills/chisle-audit/SKILL.md` | One-shot efficiency audit of a file, diff, or repo across both axes: over-engineered code and bloated prose (`/chisle-audit`). | Backed up in `arch/dotfiles/antigravity/skills/chisle-audit` |
+| **`chisle-help`** | `~/.gemini/config/skills/chisle-help/SKILL.md` | Quick-reference card for Chisle commands (`/chisle-help`). | Backed up in `arch/dotfiles/antigravity/skills/chisle-help` |
+| **`chisle-review`** | `~/.gemini/config/skills/chisle-review/SKILL.md` | Review a diff or file through the Chisle lens: flag over-engineering, speculative abstractions, and verbose code (`/chisle-review`). | Backed up in `arch/dotfiles/antigravity/skills/chisle-review` |
+| **`deep-debugger`** | `~/.gemini/config/skills/deep-debugger/SKILL.md` | Systematic, hypothesis-driven debugging methodology for tricky bugs, test failures, race conditions, and memory leaks. | Backed up in `arch/dotfiles/antigravity/skills/deep-debugger` |
+| **`frontend-design`** | `~/.gemini/config/skills/frontend-design/SKILL.md` | Guidance for distinctive, intentional visual design, typography, and aesthetic direction avoiding generic AI templates. | Backed up in `arch/dotfiles/antigravity/skills/frontend-design` |
+| **`i-have-adhd`** | `~/.gemini/config/skills/i-have-adhd/SKILL.md` | Shapes AI output for ADHD readers: next physical action first, numbered steps, current state restatement, and honest time estimates. | `git clone https://github.com/ayghri/i-have-adhd.git ~/.gemini/config/skills/i-have-adhd` |
+| **`pdf`** | `~/.gemini/config/skills/pdf/SKILL.md` | Read/extract text & tables, merge, split, rotate, watermark, create, fill forms, encrypt/decrypt, and OCR PDF files. | Backed up in `arch/dotfiles/antigravity/skills/pdf` |
+| **`sast-security-auditor`** | `~/.gemini/config/skills/sast-security-auditor/SKILL.md` | Systematic Static Application Security Testing (SAST), OWASP Top 10 vulnerability detection, secret scanning, and PR security audits. | Backed up in `arch/dotfiles/antigravity/skills/sast-security-auditor` |
+| **`task-observer`** | `~/.gemini/config/skills/task-observer/SKILL.md` | Continuous task observation and meta-learning skill (`one-skill-to-rule-them-all`). | `git clone https://github.com/rebelytics/one-skill-to-rule-them-all.git /tmp/ost && cp -r /tmp/ost/skills/task-observer ~/.gemini/config/skills/` |
+
+### 2. Installed Plugins & Bundled Plugin Skills (`~/.gemini/config/plugins/`)
+
+| Plugin Name | Version | Bundled Skills & Rules | Purpose |
+| :--- | :--- | :--- | :--- |
+| **`chisle`** (`Chisle Token Optimizer`) | `3.5.0` | **Rules**: `AGENTS.md`, `GEMINI.md`<br>**Skills**: `chisle`, `chisle-audit`, `chisle-help`, `chisle-review` | Always-on token efficiency rules and Chisle slash skills. |
+| **`chrome-devtools-plugin`** (`Chrome DevTools`) | `0.21.0` | **Skills**:<br>• `chrome-devtools` (browser automation & inspection)<br>• `a11y-debugging` (accessibility auditing)<br>• `debug-optimize-lcp` (Core Web Vitals & LCP)<br>• `memory-leak-debugging` (heap snapshots & memlab)<br>• `troubleshooting` (MCP target recovery) | Full Chrome DevTools MCP integration and web performance/accessibility debugging suite. |
+| **`modern-web-guidance-plugin`** (`Modern Web Guidance`) | `1.0.6` | **Skills**:<br>• `modern-web-guidance` (modern HTML/CSS/JS APIs, View Transitions, `:has()`, Popover, Anchor Positioning)<br>• `chrome-extensions` (Manifest V3 extension engineering & Web Store publishing) | Up-to-date modern web platform and Chrome Extension MV3 guidance. |
+| **`i-have-adhd`** | `git` | **Skill**: `i-have-adhd` | ADHD-friendly output formatting plugin (`https://github.com/ayghri/i-have-adhd.git`). |
+
+### 3. Built-in Antigravity System Skills (`~/.gemini/antigravity/builtin/skills/`)
+Automatically provided by the Antigravity IDE/CLI runtime:
+- `agy-customizations`: Guide for creating and managing Antigravity skills, rules, plugins, hooks, and MCP servers.
+- `antigravity-guide`: Reference and sitemap for Antigravity IDE, `agy` CLI, SDK, slash commands, and keybindings.
+- `automation`: Interactive guide for creating scheduled background automations (`/automation`).
+- `generative_ui`: Render interactive HTML widgets inline in chat or as standalone artifacts.
+- `migrate-workflows`: Migrate legacy workflows to modern `SKILL.md` files.
+- `plugin`: Package, install, enable, and disable Antigravity plugins (`/plugin`).
+- `ui-extension`: Build and debug side-pane UI extensions using the Node.js Sidecar SDK.
+- `ui-plugin-navigation`: Surface one-click pills in chat to toggle UI plugin panels.
+
+### Manual Skill & Plugin Restore Command
+If you ever want to restore all custom skills and plugins manually without running the full installer:
+```bash
+mkdir -p ~/.gemini/config/skills ~/.gemini/config/plugins
+cp -rf ~/nixos-config/arch/dotfiles/antigravity/skills/* ~/.gemini/config/skills/
+cp -rf ~/nixos-config/arch/dotfiles/antigravity/plugins/* ~/.gemini/config/plugins/
+```
+
+---
+
+## 🔐 Post-Install Manual Setup (SSH Keys, Git & Sensitive Credentials)
+
+Because private cryptographic keys, tokens, and personal credentials **must never be stored in a public Git repository**, complete these steps manually after `install.sh` finishes and you reboot into Hyprland:
+
+### 1. Generate or Restore SSH Keys (`~/.ssh`)
+```bash
+# Create ~/.ssh with strict permissions
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# Generate a new Ed25519 SSH key for GitHub & remote servers
+ssh-keygen -t ed25519 -C "your_email@example.com" -f ~/.ssh/id_ed25519
+
+# Start ssh-agent and add your key
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+
+# Copy public key to clipboard (Wayland) to paste into GitHub -> Settings -> SSH Keys
+wl-copy < ~/.ssh/id_ed25519.pub
+# (Or print it to terminal: cat ~/.ssh/id_ed25519.pub)
+```
+
+Optional `~/.ssh/config`:
+```ssh-config
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+    AddKeysToAgent yes
+```
+Fix permissions if restoring existing keys from a USB backup:
+```bash
+chmod 700 ~/.ssh
+chmod 600 ~/.ssh/id_* ~/.ssh/config
+chmod 644 ~/.ssh/*.pub ~/.ssh/known_hosts
+```
+
+### 2. Configure Git Identity & SSH Signing
+```bash
+git config --global user.name "Manuja"
+git config --global user.email "your_email@example.com"
+git config --global init.defaultBranch main
+
+# Optional: Sign commits using your SSH key
+git config --global gpg.format ssh
+git config --global user.signingkey ~/.ssh/id_ed25519.pub
+git config --global commit.gpgsign true
+```
+
+### 3. Authenticate GitHub CLI (`gh`) & Switch Repo Remote to SSH
+```bash
+# Authenticate GitHub CLI interactively
+gh auth login
+
+# Test SSH connection to GitHub
+ssh -T git@github.com
+
+# Switch your local Linux-Configs clone from HTTPS to SSH so you can push updates
+cd ~/nixos-config
+git remote set-url origin git@github.com:manuja-me/Linux-Configs.git
+```
+
+### 4. Authenticate AI & Cloud CLIs (Antigravity, Spotify, etc.)
+- **Google Antigravity**: Launch Antigravity or run `agy` and sign in to your Google account; reconnect any MCP plugin accounts via the Plugins Manager.
+- **Spotify + Spicetify**:
+  1. Launch `spotify` once and log in to your account.
+  2. Run `spicetify backup apply` in a terminal to activate your custom Spicetify theme (`~/.config/spicetify`).
+- **Environment Secrets / API Keys**: Store any private API keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, etc.) in `~/.zsh_secrets` (chmod `600`) and source it from `~/.zshrc` (`[[ -f ~/.zsh_secrets ]] && source ~/.zsh_secrets`) so they stay untracked by Git.
+
+---
+
 ## 🛡️ Bootloader Recovery (`boot-recovery/recover-boot.sh`)
 
 Automated emergency GRUB EFI bootloader restoration script for this machine (dual-boot Arch on NVMe + Windows NVMe).
@@ -468,4 +589,5 @@ chmod +x boot-recovery/recover-boot.sh
 - Ensures `GRUB_DISABLE_OS_PROBER=false` is configured and rebuilds `mkinitcpio -P`.
 - Runs `grub-install` (UEFI target + `--removable` fallback) and `grub-mkconfig`.
 - Restores GRUB to the top priority in `efibootmgr` firmware boot order.
+
 
