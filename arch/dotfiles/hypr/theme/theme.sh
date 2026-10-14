@@ -220,24 +220,29 @@ apply_mako() {
 		# Mako_Colors
 		background-color=${background}
 		text-color=${foreground}
-		border-color=${modbackground[1]}
+		border-color=${accent}
 		progress-color=over ${accent}
 
 		[urgency=low]
-		border-color=${modbackground[1]}
+		border-color=${color4}
 		default-timeout=2000
 
 		[urgency=normal]
-		border-color=${modbackground[1]}
+		border-color=${accent}
 		default-timeout=5000
 
 		[urgency=high]
 		border-color=${color1}
 		text-color=${color1}
 		default-timeout=0
+
+		[urgency=critical]
+		border-color=${color1}
+		text-color=${color1}
+		default-timeout=0
 	_EOF_
 
-	pkill mako && bash ${DIR}/scripts/notifications &
+	makoctl reload &>/dev/null || (pkill mako && bash ${DIR}/scripts/notifications &)
 }
 
 ## Rofi --------------------------------------
@@ -275,7 +280,7 @@ apply_waybar() {
 		@define-color white           ${color7};
 	EOF
 
-	pkill waybar && bash ${DIR}/scripts/statusbar &
+	killall -SIGUSR2 waybar 2>/dev/null || (pkill waybar; sleep 0.2; bash ${DIR}/scripts/statusbar &)
 }
 
 ## Wlogout -----------------------------------

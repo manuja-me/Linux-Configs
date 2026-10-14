@@ -18,7 +18,9 @@ This guide walks you through transforming a **fresh barebone Arch Linux installa
 | **Dynamic Theming** | `pastel` + `python-pywal` + custom `theme.sh` | On-the-fly theme switching (Dark, Light, Catppuccin, Pywal wallpaper-adaptive) |
 | **Display Manager & Boot** | `sddm` (`corners` / `sddm-astronaut-theme`) + `grub` (`Elegant-wave-window-right-dark`) | Custom Catppuccin Mocha SDDM login & themed GRUB2 dual-boot menu |
 | **GTK, Qt & Icons** | `Manhattan` / `Catppuccin-Mocha`, `Luv-Folders-Dark`, `Qogirr-Dark`, `qt5ct` | Unified dark/light theme consistency across GTK2/3/4 and Qt apps |
-| **Shell & TUI Suite** | `zsh` (`Oh-My-Zsh`), `neovim` (`LazyVim`), `yazi`, `btop`, `cava`, `fastfetch`, `zathura` | Full terminal productivity and media workflow |
+| **Shell & TUI Suite** | `zsh` (`Oh-My-Zsh`), `neovim` (`Kickstart Neovim`), `yazi`, `btop`, `cava`, `fastfetch`, `zathura` | Full terminal productivity and media workflow |
+| **Power & Refresh Rate** | `auto_refresh.sh` (`udevadm` power monitor) | Automatically switches refresh rate between 144Hz (AC) and 60Hz (Battery) |
+| **Sinhala Typography** | `fontconfig` (`fonts.conf`) | Screen-optimized Sinhala typography with Yaldevi SemiBold & Abhaya Libre SemiBold fallbacks |
 
 ---
 
@@ -39,7 +41,7 @@ curl -fsSL https://raw.githubusercontent.com/manuja-me/Linux-Configs/main/arch/b
    - **Target Username**: Uses your current user or creates a new user account (`wheel`, `video`, `input` groups + sudo access). Prompts for your `sudo` (or `root` via `su`) password whenever privileges are needed along the way.
    - **GPU Drivers**: Choose `1) Intel`, `2) AMD`, `3) NVIDIA`, or `4) VM/Skip`.
    - **SDDM & GRUB Themes**: Choose `Corners` (Catppuccin Mocha) or `Astronaut`, and toggle the `Elegant-wave-window-right-dark` GRUB theme.
-   - **Optional Feature Bundles**: Toggle Shell/TUI (`zsh`, `nvim`/LazyVim, `yazi`, `btop`, `cava`), Media (`spotify`, `spicetify`, `easyeffects`, `mpv`), Extra Desktop Apps (`firefox`, `chromium`, `localsend`, `timeshift`), KVM/QEMU Virtualization, and Google Antigravity AI Suite.
+   - **Optional Feature Bundles**: Toggle Shell/TUI (`zsh`, `nvim`/Kickstart, `yazi`, `btop`, `cava`), Media (`spotify`, `spicetify`, `easyeffects`, `mpv`), Extra Desktop Apps (`firefox`, `chromium`, `localsend`, `timeshift`), KVM/QEMU Virtualization, and Google Antigravity AI Suite.
 5. **Automatic Verbose Execution & Error Diagnostics**:
    - All scripts (`bootstrap.sh`, `install.sh`, `restore.sh`) run in **automatic verbose mode (`set -x`)**, printing every command with `[script:function:line]` prefixes in real time and streaming full output to `/tmp/arch-hypr-install-<timestamp>.log`.
    - If any step fails, an `ERR` trap immediately prints the exact failing function, line number, exit code, failed command, log path, and rollback command (`./restore.sh`).
@@ -203,7 +205,7 @@ opacity = 1.0
 style = { shape = "Block", blinking = "On" }
 EOF
 
-# 3. Editor, TUI & Desktop App Configs (LazyVim/nvim, yazi, btop, cava, mpv, qt5ct, spicetify, Thunar, viewnior, xarchiver, fontconfig)
+# 3. Editor, TUI & Desktop App Configs (Kickstart Neovim, yazi, btop, cava, mpv, qt5ct, spicetify, Thunar, viewnior, xarchiver, fontconfig)
 for app in nvim yazi btop cava mpv qt5ct spicetify Thunar viewnior xarchiver fontconfig; do
     mkdir -p ~/.config/"$app"
     cp -rf "$SRC/dotfiles/$app"/. ~/.config/"$app"/
@@ -468,7 +470,11 @@ All custom skills and plugins currently active on this Linux Antigravity setup a
 | **`frontend-design`** | `~/.gemini/config/skills/frontend-design/SKILL.md` | Guidance for distinctive, intentional visual design, typography, and aesthetic direction avoiding generic AI templates. | Backed up in `arch/dotfiles/antigravity/skills/frontend-design` |
 | **`i-have-adhd`** | `~/.gemini/config/skills/i-have-adhd/SKILL.md` | Shapes AI output for ADHD readers: next physical action first, numbered steps, current state restatement, and honest time estimates. | `git clone https://github.com/ayghri/i-have-adhd.git ~/.gemini/config/skills/i-have-adhd` |
 | **`pdf`** | `~/.gemini/config/skills/pdf/SKILL.md` | Read/extract text & tables, merge, split, rotate, watermark, create, fill forms, encrypt/decrypt, and OCR PDF files. | Backed up in `arch/dotfiles/antigravity/skills/pdf` |
+| **`reverse-engineer-anything`** | `~/.gemini/config/skills/reverse-engineer-anything/SKILL.md` | Reverse engineer native, managed, Electron/JS, packaged, firmware, and browser targets using REA. | Backed up in `arch/dotfiles/antigravity/skills/reverse-engineer-anything` |
 | **`sast-security-auditor`** | `~/.gemini/config/skills/sast-security-auditor/SKILL.md` | Systematic Static Application Security Testing (SAST), OWASP Top 10 vulnerability detection, secret scanning, and PR security audits. | Backed up in `arch/dotfiles/antigravity/skills/sast-security-auditor` |
+| **`sinhala-explainer`** | `~/.gemini/config/skills/sinhala-explainer/SKILL.md` | Explains technical concepts, URLs, files, PDFs, or images in friendly spoken Sinhala (`/sinhala-explainer`). | Backed up in `arch/dotfiles/antigravity/skills/sinhala-explainer` |
+| **`sinhala-explainer-only-from-content`** | `~/.gemini/config/skills/sinhala-explainer-only-from-content/SKILL.md` | Explains strictly provided lecture notes, slides, or documents in spoken Sinhala without outside web retrieval (`/sinhala-explainer-only-from-content`). | Backed up in `arch/dotfiles/antigravity/skills/sinhala-explainer-only-from-content` |
+| **`sinhala-explainer-short`** | `~/.gemini/config/skills/sinhala-explainer-short/SKILL.md` | Concise, ceremony-free technical explanations in spoken Sinhala (`/sinhala-explainer-short`). | Backed up in `arch/dotfiles/antigravity/skills/sinhala-explainer-short` |
 | **`task-observer`** | `~/.gemini/config/skills/task-observer/SKILL.md` | Continuous task observation and meta-learning skill (`one-skill-to-rule-them-all`). | `git clone https://github.com/rebelytics/one-skill-to-rule-them-all.git /tmp/ost && cp -r /tmp/ost/skills/task-observer ~/.gemini/config/skills/` |
 
 ### 2. Installed Plugins & Bundled Plugin Skills (`~/.gemini/config/plugins/`)

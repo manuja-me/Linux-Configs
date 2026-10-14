@@ -74,6 +74,10 @@ mkdir -p "${SCRIPT_DIR}/misc/gtk-3.0" "${SCRIPT_DIR}/misc/gtk-4.0"
 [[ -f "${LIVE_CONFIG}/xdg-terminals.list" ]] && cp -f "${LIVE_CONFIG}/xdg-terminals.list" "${SCRIPT_DIR}/misc/xdg-terminals.list"
 [[ -f "${LIVE_CONFIG}/mimeapps.list" ]] && cp -f "${LIVE_CONFIG}/mimeapps.list" "${SCRIPT_DIR}/misc/mimeapps.list"
 [[ -f "${LIVE_HOME}/.local/bin/transmission-qt" ]] && cp -pf "${LIVE_HOME}/.local/bin/transmission-qt" "${SCRIPT_DIR}/misc/transmission-qt"
+if [[ -d "${LIVE_CONFIG}/environment.d" ]]; then
+    mkdir -p "${SCRIPT_DIR}/misc/environment.d"
+    rsync -a --delete "${LIVE_CONFIG}/environment.d/" "${SCRIPT_DIR}/misc/environment.d/"
+fi
 
 # Extra Wallpapers from ~/Pictures/wallpapers
 if [[ -d "${LIVE_HOME}/Pictures/wallpapers" ]]; then

@@ -580,7 +580,10 @@ EOF
 
     # Environment variables
     mkdir -p "$CONFIG_DIR/environment.d"
-    cat > "$CONFIG_DIR/environment.d/10-terminal.conf" << 'EOF'
+    if [[ -d "$SRC_DIR/misc/environment.d" ]]; then
+        cp -rf "$SRC_DIR/misc/environment.d"/* "$CONFIG_DIR/environment.d/"
+    else
+        cat > "$CONFIG_DIR/environment.d/10-terminal.conf" << 'EOF'
 TERMINAL=kitty
 BROWSER=firefox
 EDITOR=nvim
@@ -588,6 +591,7 @@ VISUAL=nvim
 QT_QPA_PLATFORMTHEME=qt5ct
 QT_STYLE_OVERRIDE=Fusion
 EOF
+    fi
 
     # Setup Zsh & Oh-My-Zsh if enabled
     if [[ "$INSTALL_SHELL_TUI" == true ]]; then

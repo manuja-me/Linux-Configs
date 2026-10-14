@@ -13,7 +13,7 @@ A multi-distribution configuration repository containing declarative system conf
 │   ├── dotfiles/             # Synced live user configurations:
 │   │   ├── antigravity/      #   Custom Antigravity skills & plugins backup (~/.gemini/config)
 │   │   ├── hypr/ & hyprcat/  #   Hyprland, Waybar, Rofi, Kitty, Alacritty, Foot, Mako, Wlogout
-│   │   ├── nvim/             #   LazyVim Neovim configuration & locked plugins (lazy-lock.json)
+│   │   ├── nvim/             #   Kickstart Neovim configuration & plugins (init.lua, nvim-pack-lock.json)
 │   │   ├── wallpapers/       #   Active desktop wallpapers (~/Pictures/wallpapers)
 │   │   ├── zsh/              #   Oh-My-Zsh (.zshrc, .zprofile, aliases, Yazi wrapper)
 │   │   ├── yazi/             #   Yazi terminal file manager config, keymaps & plugins
@@ -59,7 +59,7 @@ Transforms a fresh, minimal barebone Arch Linux TTY installation into this exact
 - **Interactive Setup Wizard**: Prompts for target username (creates user & configures `wheel` sudo access if needed), GPU drivers (Intel/AMD/NVIDIA/VM), SDDM & GRUB themes, and optional feature bundles.
 - **System Optimizations Included**: Tunes `/etc/pacman.conf` (`Color`, `ILoveCandy`, `ParallelDownloads = 5`), configures `zram-generator` compressed RAM swap (`zstd`), initializes `rustup default stable`, and sets GTK 2/3/4 dark mode (`Catppuccin-Mocha` + `Qogirr-Dark`).
 - **Compositor & Bar**: Hyprland + Waybar + Rofi (`cliphist` clipboard history, power profile switcher, network, bluetooth, screenshots) + Mako + Hyprlock + Wlogout + Wallpapers (`~/Pictures/wallpapers`).
-- **Shell, Editor & TUI**: Zsh (`Oh-My-Zsh`), Neovim (`LazyVim` with locked plugins), Yazi, Btop, Cava, Fastfetch, Zathura.
+- **Shell, Editor & TUI**: Zsh (`Oh-My-Zsh`), Neovim (`Kickstart Neovim` modular config), Yazi, Btop, Cava, Fastfetch, Zathura.
 - **Media, Gaming & Virtualization**: PipeWire + EasyEffects + MPV + MPD/ncmpcpp + Spotify/Spicetify (`/opt/spotify` permissions pre-configured) + QEMU/KVM/Virt-Manager.
 - **Boot & Login Aesthetics**: SDDM (`corners` Catppuccin Mocha & `astronaut` themes) + Elegant GRUB2 theme (`Elegant-wave-window-right-dark`).
 - **Clean-Slate Rollback (`restore.sh`)**: Restore pre-install snapshots or reset the system back to a clean minimal Arch TTY slate (also logged to `/tmp/arch-hypr-restore-<timestamp>.log`).
@@ -96,7 +96,7 @@ Emergency EFI/GRUB recovery script for UEFI dual-boot setups (Arch + Windows NVM
 ---
 
 ### 🤖 [Google Antigravity Setup & Skills Inventory (`arch/setup-antigravity.sh`)](arch/README.md#-complete-antigravity-skills--plugins-inventory)
-1-click environment setup replicating the Google Antigravity developer workspace, including `claude-mem` MCP & lifecycle hooks, `headroom` context compression layer, `task-observer` continuous learning skill, `specify-cli`, and all 11 standalone skills + 4 plugins backed up in `arch/dotfiles/antigravity/`.
+1-click environment setup replicating the Google Antigravity developer workspace, including `claude-mem` MCP & lifecycle hooks, `headroom` context compression layer, `task-observer` continuous learning skill, `specify-cli`, and all 14 standalone skills + 4 plugins backed up in `arch/dotfiles/antigravity/`.
 
 ```bash
 cd ~/nixos-config/arch
