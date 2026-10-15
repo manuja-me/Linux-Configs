@@ -3,9 +3,15 @@
 last_state=""
 
 set_refresh() {
-    local ac
-    ac=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null)
-    [ "$ac" = "$last_state" ] && return
+    local ac=""
+    for p in /sys/class/power_supply/AC* /sys/class/power_supply/ADP* /sys/class/power_supply/Mains*; do
+        if [[ -f "$p/online" ]]; then
+            ac=$(cat "$p/online" 2>/dev/null)
+            break
+        fi
+    done
+    [[ -z "$ac" ]] && ac=$(cat /sys/class/power_supply/ACAD/online 2>/dev/null || true)
+    [[ -z "$ac" || "$ac" == "$last_state" ]] && return
 
     prev_state="$last_state"
     last_state="$ac"

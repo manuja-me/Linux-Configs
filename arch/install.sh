@@ -350,7 +350,7 @@ install_packages() {
     # Shell & TUI Bundle
     if [[ "$INSTALL_SHELL_TUI" == true ]]; then
         pacman_pkgs+=(
-            zsh neovim yazi fzf gum fastfetch btop htop cava
+            zsh neovim ripgrep fd tree-sitter yazi fzf gum fastfetch btop htop cava
             zathura zathura-pdf-mupdf ueberzugpp poppler man-db
             npm python-pip python-pipx rustup
         )
@@ -611,9 +611,11 @@ EOF
             "$CONFIG_DIR/hypr/hyprlock.conf"
             "$CONFIG_DIR/hypr/hyprpaper.conf"
             "$CONFIG_DIR/hypr/hyprland.lua"
+            "$CONFIG_DIR/hypr/theme/current.bash"
             "$CONFIG_DIR/hyprcat/hyprlock.conf"
             "$CONFIG_DIR/hyprcat/hyprpaper.conf"
             "$CONFIG_DIR/hyprcat/hyprland.lua"
+            "$CONFIG_DIR/hyprcat/theme/current.bash"
             "$CONFIG_DIR/spicetify/config-xpui.ini"
             "$USER_HOME/.zshrc"
         )
@@ -646,10 +648,65 @@ configure_system_and_services() {
     run_root cp -f "$MISC_DIR/run-hyprland" /usr/local/bin/run-hyprland
     run_root cp -f "$MISC_DIR/run-hyprland-cat" /usr/local/bin/run-hyprland-cat
 
-    # If NVIDIA was chosen, inject NVIDIA Wayland environment variables into run-hyprland
-    if [[ "$GPU_CHOICE" == "3" ]] && ! grep -q "LIBVA_DRIVER_NAME=nvidia" /usr/local/bin/run-hyprland; then
-        run_root sed -i '/^export XDG_SESSION_DESKTOP/a export LIBVA_DRIVER_NAME=nvidia\nexport GBM_BACKEND=nvidia-drm\nexport __GLX_VENDOR_LIBRARY_NAME=nvidia\nexport NVD_BACKEND=direct\nexport ELECTRON_OZONE_PLATFORM_HINT=auto' /usr/local/bin/run-hyprland
-    fi
+    # Configure GPU Wayland profile in config.d and environment.d
+    log_info "Configuring GPU Wayland profile (choice: $GPU_CHOICE)..."
+    mkdir -p "$CONFIG_DIR/hypr/config.d" "$CONFIG_DIR/environment.d"
+    case "$GPU_CHOICE" in
+        1)
+            cat > "$CONFIG_DIR/hypr/config.d/00-gpu.conf" << 'EOF'
+# Force desktop apps, wallpaper & browser to integrated Intel Iris Xe
+env = AQ_DRM_DEVICES,/dev/dri/card1
+env = __EGL_VENDOR_LIBRARY_FILENAMES,/usr/share/glvnd/egl_vendor.d/50_mesa.json
+env = VK_DRIVER_FILES,/usr/share/vulkan/icd.d/intel_icd.json
+env = LIBVA_DRIVER_NAME,iHD
+env = MOZ_DRM_DEVICE,/dev/dri/renderD128
+env = DRI_PRIME,pci-0000_00_02_0
+EOF
+            cat > "$CONFIG_DIR/environment.d/00-gpu.conf" << 'EOF'
+AQ_DRM_DEVICES=/dev/dri/card1
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+VK_DRIVER_FILES=/usr/share/vulkan/icd.d/intel_icd.json
+LIBVA_DRIVER_NAME=iHD
+MOZ_DRM_DEVICE=/dev/dri/renderD128
+DRI_PRIME=pci-0000_00_02_0
+EOF
+            ;;
+        2)
+            cat > "$CONFIG_DIR/hypr/config.d/00-gpu.conf" << 'EOF'
+# AMD GPU Configuration
+env = LIBVA_DRIVER_NAME,radeonsi
+env = VDPAU_DRIVER,radeonsi
+EOF
+            cat > "$CONFIG_DIR/environment.d/00-gpu.conf" << 'EOF'
+LIBVA_DRIVER_NAME=radeonsi
+VDPAU_DRIVER=radeonsi
+EOF
+            ;;
+        3)
+            cat > "$CONFIG_DIR/hypr/config.d/00-gpu.conf" << 'EOF'
+# NVIDIA Wayland Configuration
+env = LIBVA_DRIVER_NAME,nvidia
+env = GBM_BACKEND,nvidia-drm
+env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+env = NVD_BACKEND,direct
+env = ELECTRON_OZONE_PLATFORM_HINT,auto
+EOF
+            cat > "$CONFIG_DIR/environment.d/00-gpu.conf" << 'EOF'
+LIBVA_DRIVER_NAME=nvidia
+GBM_BACKEND=nvidia-drm
+__GLX_VENDOR_LIBRARY_NAME=nvidia
+NVD_BACKEND=direct
+ELECTRON_OZONE_PLATFORM_HINT=auto
+EOF
+            if ! grep -q "LIBVA_DRIVER_NAME=nvidia" /usr/local/bin/run-hyprland; then
+                run_root sed -i '/^export XDG_SESSION_DESKTOP/a export LIBVA_DRIVER_NAME=nvidia\nexport GBM_BACKEND=nvidia-drm\nexport __GLX_VENDOR_LIBRARY_NAME=nvidia\nexport NVD_BACKEND=direct\nexport ELECTRON_OZONE_PLATFORM_HINT=auto' /usr/local/bin/run-hyprland
+            fi
+            ;;
+        *)
+            rm -f "$CONFIG_DIR/hypr/config.d/00-gpu.conf" "$CONFIG_DIR/environment.d/00-gpu.conf"
+            ;;
+    esac
+    chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR/hypr/config.d" "$CONFIG_DIR/environment.d" 2>/dev/null || true
     run_root chmod +x /usr/local/bin/run-hyprland /usr/local/bin/run-hyprland-cat
 
     # Wayland desktop sessions
