@@ -1,0 +1,12 @@
+[Unit]
+Description=Waybar status bar
+Documentation=https://github.com/Alexays/Waybar/wiki/
+
+[Service]
+ExecStart=/usr/bin/waybar --bar main-bar --log-level error --config %h/.config/hypr/waybar/config --style %h/.config/hypr/waybar/style.css
+ExecReload=/usr/bin/kill -SIGUSR2 $MAINPID
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=default.target

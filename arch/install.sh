@@ -593,6 +593,12 @@ QT_STYLE_OVERRIDE=Fusion
 EOF
     fi
 
+    # Systemd user services (Waybar, etc.)
+    if [[ -d "$SRC_DIR/misc/systemd/user" ]]; then
+        mkdir -p "$CONFIG_DIR/systemd/user"
+        cp -rf "$SRC_DIR/misc/systemd/user"/* "$CONFIG_DIR/systemd/user/"
+    fi
+
     # Setup Zsh & Oh-My-Zsh if enabled
     if [[ "$INSTALL_SHELL_TUI" == true ]]; then
         if [[ ! -d "$USER_HOME/.oh-my-zsh" ]]; then
@@ -799,8 +805,12 @@ EOF
     run_root systemctl enable power-profiles-daemon.service || true
     run_root systemctl enable fstrim.timer || true
 
-    # Enable PipeWire user sockets for target user
+    # Enable PipeWire & Waybar user services for target user
     run_as_user systemctl --user enable pipewire.socket pipewire-pulse.socket wireplumber.service || true
+    if [[ -f "$CONFIG_DIR/systemd/user/waybar.service" ]]; then
+        run_as_user systemctl --user daemon-reload 2>/dev/null || true
+        run_as_user systemctl --user enable waybar.service || true
+    fi
 
     if [[ "$INSTALL_VIRT" == true ]]; then
         run_root systemctl enable libvirtd.service || true

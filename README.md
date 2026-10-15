@@ -22,7 +22,7 @@ A multi-distribution configuration repository containing declarative system conf
 │   │   └── qt5ct/, mpv/, ... #   Qt5ct, MPV, Thunar, Viewnior, Xarchiver, Fontconfig
 │   ├── fonts/                # Custom Nerd Fonts (JetBrainsMono, FiraCode, Iosevka, RobotoMono)
 │   ├── gtk/                  # GTK Themes (Manhattan, Catppuccin-Mocha, White), Icons & Cursors
-│   ├── misc/                 # Session launchers, GTK 2/3/4 settings, transmission-qt wrapper & hooks
+│   ├── misc/                 # Session launchers, systemd user services (waybar), GTK settings & hooks
 │   ├── screenshots/          # Showcase screenshots
 │   ├── themes/               # System themes:
 │   │   ├── grub/             #   Elegant-wave-window-right-dark GRUB2 bootloader theme

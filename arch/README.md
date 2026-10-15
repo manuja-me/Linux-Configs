@@ -9,7 +9,7 @@ This guide walks you through transforming a **fresh barebone Arch Linux installa
 | Component | Software Used | Purpose |
 | :--- | :--- | :--- |
 | **Compositor** | `hyprland` (with `uwsm` / `start-hyprland`) | Dynamic tiling Wayland compositor |
-| **Status Bar** | `waybar` | Top status bar with system stats, audio, network, battery, theme switcher |
+| **Status Bar** | `waybar` (managed via `systemd --user`) | Top status bar with system stats, audio, network, battery, theme switcher & auto-restart |
 | **App Launcher & Menus** | `rofi` (Wayland fork) + `wofi` | App launcher, powermenu, screenshot menu, network menu, bluetooth menu |
 | **Terminals** | `kitty` (primary default), `alacritty`, `foot` | GPU-accelerated terminal emulators styled with rice colors |
 | **Notifications** | `mako` | Lightweight Wayland notification daemon with custom icons & urgency colors |
@@ -336,6 +336,7 @@ gsettings set org.gnome.desktop.wm.preferences button-layout ":"
 | `Super + S` | Open Screenshot Menu (`rofi_screenshot`) |
 | `Super + N` | Open WiFi / Network Menu (`rofi_network`) |
 | `Super + B` | Open Bluetooth Menu (`rofi_bluetooth`) |
+| `Super + Escape` / `Super + Shift + B` | Restart / Toggle Waybar Status Bar (`statusbar`) |
 | `Super + F5` or `XF86Launch3/4` | Cycle Power Profile (`power-saver` / `balanced` / `performance`) |
 | `Super + P` | Color Picker (`hyprpicker`) |
 | `Super + Shift + P` | Pin Floating Window Across Workspaces |

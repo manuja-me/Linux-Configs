@@ -371,18 +371,77 @@ apply_hyprlock() {
 
 ## Hyprland --------------------------------------
 apply_hypr() {
-	# hyprland : theme
-	sed -i "${DIR}/config.d/00-hyprtheme.conf" \
-		-e "s/^\(\$active_border_col_1[[:space:]]*=[[:space:]]*\).*/\10xFF${accent:1}/" \
-		-e "s/^\(\$active_border_col_2[[:space:]]*=[[:space:]]*\).*/\10xFF${color1:1}/" \
-		-e "s/^\(\$inactive_border_col_1[[:space:]]*=[[:space:]]*\).*/\10xFF${modbackground[1]:1}/" \
-		-e "s/^\(\$inactive_border_col_2[[:space:]]*=[[:space:]]*\).*/\10xFF${modbackground[2]:1}/" \
-		-e "s/^\(\$group_border_active_col[[:space:]]*=[[:space:]]*\).*/\10xFF${accent:1}/" \
-		-e "s/^\(\$group_border_inactive_col[[:space:]]*=[[:space:]]*\).*/\10xFF${modbackground[1]:1}/" \
-		-e "s/^\(\$group_border_locked_active_col[[:space:]]*=[[:space:]]*\).*/\10xFF${color1:1}/" \
-		-e "s/^\(\$group_border_locked_inactive_col[[:space:]]*=[[:space:]]*\).*/\10xFF${modbackground[1]:1}/" \
-		-e "s/^\(\$groupbar_text_color_active[[:space:]]*=[[:space:]]*\).*/\10xFF${background:1}/" \
-		-e "s/^\(\$groupbar_text_color_inactive[[:space:]]*=[[:space:]]*\).*/\10xFF${foreground:1}/"
+	local c_accent="${accent#\#}"
+	local c_color1="${color1#\#}"
+	local c_bg="${background#\#}"
+	local c_fg="${foreground#\#}"
+	local c_mod1="${modbackground[1]#\#}"
+	local c_mod2="${modbackground[2]#\#}"
+
+	# hyprland : legacy conf fallback
+	if [[ -f "${DIR}/config.d/00-hyprtheme.conf" ]]; then
+		sed -i "${DIR}/config.d/00-hyprtheme.conf" \
+			-e "s/^\(\$active_border_col_1[[:space:]]*=[[:space:]]*\).*/\10xFF${c_accent}/" \
+			-e "s/^\(\$active_border_col_2[[:space:]]*=[[:space:]]*\).*/\10xFF${c_color1}/" \
+			-e "s/^\(\$inactive_border_col_1[[:space:]]*=[[:space:]]*\).*/\10xFF${c_mod1}/" \
+			-e "s/^\(\$inactive_border_col_2[[:space:]]*=[[:space:]]*\).*/\10xFF${c_mod2}/" \
+			-e "s/^\(\$group_border_active_col[[:space:]]*=[[:space:]]*\).*/\10xFF${c_accent}/" \
+			-e "s/^\(\$group_border_inactive_col[[:space:]]*=[[:space:]]*\).*/\10xFF${c_mod1}/" \
+			-e "s/^\(\$group_border_locked_active_col[[:space:]]*=[[:space:]]*\).*/\10xFF${c_color1}/" \
+			-e "s/^\(\$group_border_locked_inactive_col[[:space:]]*=[[:space:]]*\).*/\10xFF${c_mod1}/" \
+			-e "s/^\(\$groupbar_text_color_active[[:space:]]*=[[:space:]]*\).*/\10xFF${c_bg}/" \
+			-e "s/^\(\$groupbar_text_color_inactive[[:space:]]*=[[:space:]]*\).*/\10xFF${c_fg}/"
+	fi
+
+	# hyprland : lua theme persistence
+	cat > "${DIR}/theme/hyprtheme.lua" <<- _EOF_
+		return {
+		    active_border_1 = "0xFF${c_accent}",
+		    active_border_2 = "0xFF${c_color1}",
+		    inactive_border_1 = "0xFF${c_mod1}",
+		    inactive_border_2 = "0xFF${c_mod2}",
+		    nogroup_border = "0xFF${c_mod2}",
+		    nogroup_border_active = "0xFF${c_accent}",
+		    group_border_active = "0xFF${c_accent}",
+		    group_border_inactive = "0xFF${c_mod1}",
+		    group_border_locked_active = "0xFF${c_color1}",
+		    group_border_locked_inactive = "0xFF${c_mod1}",
+		    groupbar_text_active = "0xFF${c_bg}",
+		    groupbar_text_inactive = "0xFF${c_fg}",
+		}
+	_EOF_
+
+	# hyprland : dynamic runtime update via hyprctl eval (lua engine)
+	hyprctl eval "hl.config({
+	    general = {
+	        col = {
+	            active_border = { colors = {\"0xFF${c_accent}\", \"0xFF${c_color1}\"}, angle = 45 },
+	            inactive_border = { colors = {\"0xFF${c_mod1}\", \"0xFF${c_mod2}\"}, angle = 45 },
+	            nogroup_border = \"0xFF${c_mod2}\",
+	            nogroup_border_active = \"0xFF${c_accent}\"
+	        }
+	    },
+	    group = {
+	        col = {
+	            border_active = \"0xFF${c_accent}\",
+	            border_inactive = \"0xFF${c_mod1}\",
+	            border_locked_active = \"0xFF${c_color1}\",
+	            border_locked_inactive = \"0xFF${c_mod1}\"
+	        },
+	        groupbar = {
+	            text_color = \"0xFF${c_bg}\",
+	            text_color_inactive = \"0xFF${c_fg}\",
+	            text_color_locked_active = \"0xFF${c_bg}\",
+	            text_color_locked_inactive = \"0xFF${c_fg}\",
+	            col = {
+	                active = \"0xFF${c_accent}\",
+	                inactive = \"0xFF${c_mod1}\",
+	                locked_active = \"0xFF${c_color1}\",
+	                locked_inactive = \"0xFF${c_mod1}\"
+	            }
+	        }
+	    }
+	})" &>/dev/null || true
 
 	hyprctl reload &>/dev/null || true
 }

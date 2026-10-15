@@ -44,6 +44,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprsunset")
     hl.exec_cmd("hypridle")
     hl.exec_cmd(scripts .. "/startup")
+    hl.exec_cmd(scripts .. "/auto_refresh.sh")
 end)
 
 -------------------------------
@@ -51,6 +52,31 @@ end)
 -------------------------------
 hl.env("XCURSOR_THEME", "Sweet")
 hl.env("XCURSOR_SIZE", "16")
+
+-----------------------
+---- THEME COLORS -----
+-----------------------
+local theme_file = hyprDir .. "/theme/hyprtheme.lua"
+local theme = {}
+local ok, res = pcall(dofile, theme_file)
+if ok and type(res) == "table" then
+    theme = res
+else
+    theme = {
+        active_border_1 = "0xFFb4a1db",
+        active_border_2 = "0xFFdb86ba",
+        inactive_border_1 = "0xFF2a323b",
+        inactive_border_2 = "0xFF353f4a",
+        nogroup_border = "0xFF353f4a",
+        nogroup_border_active = "0xFFb4a1db",
+        group_border_active = "0xFFb4a1db",
+        group_border_inactive = "0xFF2a323b",
+        group_border_locked_active = "0xFFdb86ba",
+        group_border_locked_inactive = "0xFF2a323b",
+        groupbar_text_active = "0xFF20262C",
+        groupbar_text_inactive = "0xFFf1fcf9",
+    }
+end
 
 -----------------------
 ---- LOOK AND FEEL ----
@@ -63,10 +89,10 @@ hl.config({
         float_gaps = 0,
         gaps_workspaces = 0,
         col = {
-            active_border = { colors = {"0xFFb4a1db", "0xFFdb86ba"}, angle = 45 },
-            inactive_border = { colors = {"0xFF2a323b", "0xFF353f4a"}, angle = 45 },
-            nogroup_border = "0xFF353f4a",
-            nogroup_border_active = "0xFFb4a1db",
+            active_border = { colors = {theme.active_border_1, theme.active_border_2}, angle = 45 },
+            inactive_border = { colors = {theme.inactive_border_1, theme.inactive_border_2}, angle = 45 },
+            nogroup_border = theme.nogroup_border,
+            nogroup_border_active = theme.nogroup_border_active,
         },
         layout = "dwindle",
         no_focus_fallback = false,
@@ -214,10 +240,10 @@ hl.config({
         merge_floated_into_tiled_on_groupbar = false,
         group_on_movetoworkspace = false,
         col = {
-            border_active = "0xFFb4a1db",
-            border_inactive = "0xFF2a323b",
-            border_locked_active = "0xFFdb86ba",
-            border_locked_inactive = "0xFF2a323b",
+            border_active = theme.group_border_active,
+            border_inactive = theme.group_border_inactive,
+            border_locked_active = theme.group_border_locked_active,
+            border_locked_inactive = theme.group_border_locked_inactive,
         },
         groupbar = {
             enabled = true,
@@ -240,15 +266,15 @@ hl.config({
             gradient_rounding_power = 2.0,
             round_only_edges = true,
             gradient_round_only_edges = true,
-            text_color = "0xFF20262C",
-            text_color_inactive = "0xFFf1fcf9",
-            text_color_locked_active = "0xFF20262C",
-            text_color_locked_inactive = "0xFFf1fcf9",
+            text_color = theme.groupbar_text_active,
+            text_color_inactive = theme.groupbar_text_inactive,
+            text_color_locked_active = theme.groupbar_text_active,
+            text_color_locked_inactive = theme.groupbar_text_inactive,
             col = {
-                active = "0xFFb4a1db",
-                inactive = "0xFF2a323b",
-                locked_active = "0xFFdb86ba",
-                locked_inactive = "0xFF2a323b",
+                active = theme.group_border_active,
+                inactive = theme.group_border_inactive,
+                locked_active = theme.group_border_locked_active,
+                locked_inactive = theme.group_border_locked_inactive,
             },
             gaps_in = 4,
             gaps_out = 4,
@@ -519,6 +545,8 @@ hl.bind("SUPER + S", hl.dsp.exec_cmd(rofi_screenshot))
 hl.bind("SUPER + P", hl.dsp.exec_cmd(colorpicker))
 hl.bind("CTRL + ALT + L", hl.dsp.exec_cmd("hyprlock"))
 hl.bind("SUPER + V", hl.dsp.exec_cmd(rofi_clipboard))
+hl.bind("SUPER + Escape", hl.dsp.exec_cmd(scripts .. "/statusbar"))
+hl.bind("SUPER + SHIFT + B", hl.dsp.exec_cmd(scripts .. "/statusbar"))
 
 -- Function keys
 hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(backlight .. " --inc"), { locked = true, repeating = true })
@@ -633,5 +661,5 @@ hl.bind("SUPER + ALT_R", hl.dsp.window.resize(), { mouse = true })
 -- Switches
 hl.bind("switch:Lid Switch", hl.dsp.exec_cmd("hyprlock"), { locked = true })
 hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprctl keyword monitor 'eDP-1, disable'"), { locked = true })
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"preferred\", position = \"auto\", scale = 1.0 })'"), { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"preferred\", position = \"auto\", scale = 1.0 })'; " .. scripts .. "/statusbar --reload"), { locked = true })
 

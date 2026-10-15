@@ -190,7 +190,7 @@ clean_arch_slate() {
     for cfg in "${rice_configs[@]}"; do
         rm -rf "${CONFIG_DIR:?}/$cfg"
     done
-    rm -rf "$CONFIG_DIR/environment.d" "$CONFIG_DIR/xdg-terminals.list"
+    rm -rf "$CONFIG_DIR/environment.d" "$CONFIG_DIR/xdg-terminals.list" "$CONFIG_DIR/systemd/user/waybar.service" "$CONFIG_DIR/systemd/user/default.target.wants/waybar.service"
     rm -f "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.local/bin/transmission-qt"
     rm -rf "$DATA_DIR/themes/Manhattan" "$DATA_DIR/themes/Catppuccin-Mocha" "$DATA_DIR/themes/White"
     rm -rf "$DATA_DIR/icons/Luv-Folders" "$DATA_DIR/icons/Luv-Folders-Dark" "$DATA_DIR/icons/Archcraft" "$DATA_DIR/icons/Archcraft-Dark"

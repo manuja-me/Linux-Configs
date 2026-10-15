@@ -80,6 +80,10 @@ if [[ -d "${LIVE_CONFIG}/environment.d" ]]; then
     mkdir -p "${SCRIPT_DIR}/misc/environment.d"
     rsync -a --delete "${LIVE_CONFIG}/environment.d/" "${SCRIPT_DIR}/misc/environment.d/"
 fi
+if [[ -d "${LIVE_CONFIG}/systemd/user" ]]; then
+    mkdir -p "${SCRIPT_DIR}/misc/systemd/user"
+    rsync -a --delete --exclude='*.wants' "${LIVE_CONFIG}/systemd/user/" "${SCRIPT_DIR}/misc/systemd/user/"
+fi
 
 # Extra Wallpapers from ~/Pictures/wallpapers
 if [[ -d "${LIVE_HOME}/Pictures/wallpapers" ]]; then

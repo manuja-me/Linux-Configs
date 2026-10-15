@@ -7,6 +7,26 @@
 CONFIG="$HOME/.config/hypr/waybar/config"
 STYLE="$HOME/.config/hypr/waybar/style.css"
 
-if [[ ! `pidof waybar` ]]; then
-	waybar --bar main-bar --log-level error --config ${CONFIG} --style ${STYLE} &
+if [[ "$1" == "--reload" ]]; then
+	systemctl --user reload waybar 2>/dev/null || killall -SIGUSR2 waybar 2>/dev/null
+	exit 0
 fi
+
+if [[ "$1" == "--toggle" ]]; then
+	killall -SIGUSR1 waybar 2>/dev/null
+	exit 0
+fi
+
+if systemctl --user is-active --quiet waybar.service; then
+	systemctl --user restart waybar.service
+else
+	systemctl --user daemon-reload 2>/dev/null
+	systemctl --user start waybar.service 2>/dev/null || {
+		pkill -x waybar 2>/dev/null
+		while pgrep -x waybar >/dev/null; do sleep 0.1; done
+		nohup waybar --bar main-bar --log-level error --config "${CONFIG}" --style "${STYLE}" >/dev/null 2>&1 &
+		disown
+	}
+fi
+
+

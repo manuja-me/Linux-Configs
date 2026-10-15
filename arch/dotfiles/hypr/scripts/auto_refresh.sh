@@ -23,6 +23,7 @@ set_refresh() {
         hyprctl eval 'hl.monitor({ output = "eDP-1", mode = "1920x1080@60.00Hz", position = "0x0", scale = 1.0 })' >/dev/null 2>&1
         [ -n "$prev_state" ] && notify-send -u low -i video-display "Display Refresh Rate" "Switched to 60Hz (Battery Mode)"
     fi
+    killall -SIGUSR2 waybar 2>/dev/null
 }
 
 set_refresh
