@@ -19,11 +19,13 @@ mkdir -p "${SCRIPT_DIR}/dotfiles/hypr" "${SCRIPT_DIR}/dotfiles/hyprcat"
 rsync -a --delete \
     --exclude='__pycache__' \
     --exclude='*.bak' \
+    --exclude='sed*' \
     "${LIVE_CONFIG}/hypr/" "${SCRIPT_DIR}/dotfiles/hypr/"
 
 rsync -a --delete \
     --exclude='__pycache__' \
     --exclude='*.bak' \
+    --exclude='sed*' \
     "${LIVE_CONFIG}/hyprcat/" "${SCRIPT_DIR}/dotfiles/hyprcat/"
 
 # Preserve fallback profile picture in hypr/wallpapers if present on system
