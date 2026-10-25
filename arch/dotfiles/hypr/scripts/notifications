@@ -4,8 +4,68 @@
 ##
 ## Mako -----------------------------------------------------
 
-CONFIG="$HOME/.config/hypr/mako/config"
+DIR="$HOME/.config/hypr"
+CONFIG="$DIR/mako/config"
+CURRENT_THEME="$DIR/theme/current.bash"
+
+update_theme() {
+	if [[ -f "$CURRENT_THEME" ]]; then
+		source "$CURRENT_THEME"
+	fi
+
+	local theme_accent="${accent:-$(hyprctl getoption general:col.active_border 2>/dev/null | awk '/gradient data:/ {print "#" substr($3, 3)}')}"
+	[[ -z "$theme_accent" || "$theme_accent" == "#" ]] && theme_accent="${color5:-#b4a1db}"
+
+	local bg="${background:-#20262C}"
+	local fg="${foreground:-#f1fcf9}"
+	local c1="${color1:-#db86ba}"
+
+	local bs rd
+	bs=$(hyprctl getoption general:border_size 2>/dev/null | awk '/int:/ {print $2}')
+	[[ -z "$bs" ]] && bs=$(grep -m1 '^\$hypr_border_size' "$DIR/config.d/00-hyprtheme.conf" 2>/dev/null | awk '{print $3}')
+	rd=$(hyprctl getoption decoration:rounding 2>/dev/null | awk '/int:/ {print $2}')
+	[[ -z "$rd" ]] && rd=$(grep -m1 '^\$hypr_rounding' "$DIR/config.d/00-hyprtheme.conf" 2>/dev/null | awk '{print $3}')
+
+	sed -i -e "s/^border-size=.*/border-size=${bs:-2}/" \
+	       -e "s/^border-radius=.*/border-radius=${rd:-0}/" \
+	       "$CONFIG"
+
+	sed -i '/# Mako_Colors/Q' "$CONFIG"
+	cat >> "$CONFIG" <<- _EOF_
+		# Mako_Colors
+		background-color=${bg}
+		text-color=${fg}
+		border-color=${theme_accent}
+		progress-color=over ${theme_accent}
+
+		[urgency=low]
+		border-color=${theme_accent}
+		default-timeout=2000
+
+		[urgency=normal]
+		border-color=${theme_accent}
+		default-timeout=5000
+
+		[urgency=high]
+		border-color=${theme_accent}
+		text-color=${c1}
+		default-timeout=0
+
+		[urgency=critical]
+		border-color=${theme_accent}
+		text-color=${c1}
+		default-timeout=0
+	_EOF_
+
+	makoctl reload &>/dev/null || true
+}
+
+update_theme
+
+if [[ "$1" == "--reload" || "$1" == "--update" ]]; then
+	exit 0
+fi
 
 if [[ ! `pidof mako` ]]; then
-	mako --config ${CONFIG}
+	exec mako --config "${CONFIG}"
 fi

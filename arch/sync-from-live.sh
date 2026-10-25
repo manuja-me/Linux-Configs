@@ -76,6 +76,9 @@ mkdir -p "${SCRIPT_DIR}/misc/gtk-3.0" "${SCRIPT_DIR}/misc/gtk-4.0"
 [[ -f "${LIVE_CONFIG}/xdg-terminals.list" ]] && cp -f "${LIVE_CONFIG}/xdg-terminals.list" "${SCRIPT_DIR}/misc/xdg-terminals.list"
 [[ -f "${LIVE_CONFIG}/mimeapps.list" ]] && cp -f "${LIVE_CONFIG}/mimeapps.list" "${SCRIPT_DIR}/misc/mimeapps.list"
 [[ -f "${LIVE_HOME}/.local/bin/transmission-qt" ]] && cp -pf "${LIVE_HOME}/.local/bin/transmission-qt" "${SCRIPT_DIR}/misc/transmission-qt"
+[[ -f "${LIVE_HOME}/.local/bin/wal" ]] && cp -pf "${LIVE_HOME}/.local/bin/wal" "${SCRIPT_DIR}/misc/wal"
+[[ -f "${LIVE_HOME}/.local/bin/run-hyprland" ]] && cp -pf "${LIVE_HOME}/.local/bin/run-hyprland" "${SCRIPT_DIR}/misc/run-hyprland"
+[[ -f "${LIVE_HOME}/.local/bin/run-hyprland-cat" ]] && cp -pf "${LIVE_HOME}/.local/bin/run-hyprland-cat" "${SCRIPT_DIR}/misc/run-hyprland-cat"
 if [[ -d "${LIVE_CONFIG}/environment.d" ]]; then
     mkdir -p "${SCRIPT_DIR}/misc/environment.d"
     rsync -a --delete "${LIVE_CONFIG}/environment.d/" "${SCRIPT_DIR}/misc/environment.d/"
@@ -83,6 +86,8 @@ fi
 if [[ -d "${LIVE_CONFIG}/systemd/user" ]]; then
     mkdir -p "${SCRIPT_DIR}/misc/systemd/user"
     rsync -a --delete --exclude='*.wants' "${LIVE_CONFIG}/systemd/user/" "${SCRIPT_DIR}/misc/systemd/user/"
+    # Normalize user path in systemd user service units to %h for portability
+    sed -i "s|${LIVE_HOME}|%h|g" "${SCRIPT_DIR}/misc/systemd/user/"*.service 2>/dev/null || true
 fi
 
 # Extra Wallpapers from ~/Pictures/wallpapers

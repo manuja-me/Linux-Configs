@@ -1,6 +1,8 @@
 [Unit]
 Description=Waybar status bar
 Documentation=https://github.com/Alexays/Waybar/wiki/
+After=graphical-session.target
+PartOf=graphical-session.target
 
 [Service]
 ExecStart=/usr/bin/waybar --bar main-bar --log-level error --config %h/.config/hypr/waybar/config --style %h/.config/hypr/waybar/style.css

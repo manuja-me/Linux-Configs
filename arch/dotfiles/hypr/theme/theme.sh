@@ -3,6 +3,7 @@
 ## Copyright (C) 2020-2026 Aditya Shakya <adi1090x@gmail.com>
 ##
 ## Script To Apply Themes
+trap '' HUP TERM
 
 ## Theme ------------------------------------
 DIR="$HOME/.config/hypr"
@@ -37,6 +38,8 @@ source_default() {
 	altforeground="`pastel color $foreground | pastel darken 0.30 | pastel format hex`"
 	modbackground=(`pastel gradient -n 3 $background $altbackground | pastel format hex`)
 	accent="$color5"
+	echo "accent='$accent'" >> ${CURRENT_THEME}
+	apply_mako
 	notify-send -h string:x-canonical-private-synchronous:sys-notify-dtheme -u normal -i ${PATH_MAKO}/icons/palette.png "Applying Default Theme..."
 }
 
@@ -49,6 +52,8 @@ source_light() {
 	altforeground="`pastel color $foreground | pastel lighten 0.30 | pastel format hex`"
 	modbackground=(`pastel gradient -n 3 $background $altbackground | pastel format hex`)
 	accent="$color5"
+	echo "accent='$accent'" >> ${CURRENT_THEME}
+	apply_mako
 	notify-send -h string:x-canonical-private-synchronous:sys-notify-dtheme -u normal -i ${PATH_MAKO}/icons/palette.png "Applying Light Theme..."
 }
 
@@ -95,6 +100,8 @@ source_pywal() {
 	altforeground="`pastel color $foreground | pastel darken 0.30 | pastel format hex`"
 	modbackground=(`pastel gradient -n 3 $background $altbackground | pastel format hex`)
 	accent="$color4"
+	echo "accent='$accent'" >> ${CURRENT_THEME}
+	apply_mako
 	echo "dark" > "$DIR/theme/.mode_state"
 	gtk_theme="${gtk_theme:-Manhattan}"
 	gtk_icons="${gtk_icons:-Luv-Folders-Dark}"
@@ -214,35 +221,7 @@ apply_kitty() {
 
 ## Mako --------------------------------------
 apply_mako() {
-	# mako : config
-	sed -i '/# Mako_Colors/Q' ${PATH_MAKO}/config
-	cat >> ${PATH_MAKO}/config <<- _EOF_
-		# Mako_Colors
-		background-color=${background}
-		text-color=${foreground}
-		border-color=${accent}
-		progress-color=over ${accent}
-
-		[urgency=low]
-		border-color=${color4}
-		default-timeout=2000
-
-		[urgency=normal]
-		border-color=${accent}
-		default-timeout=5000
-
-		[urgency=high]
-		border-color=${color1}
-		text-color=${color1}
-		default-timeout=0
-
-		[urgency=critical]
-		border-color=${color1}
-		text-color=${color1}
-		default-timeout=0
-	_EOF_
-
-	makoctl reload &>/dev/null || (pkill mako && bash ${DIR}/scripts/notifications &)
+	bash "${DIR}/scripts/notifications" --update
 }
 
 ## Rofi --------------------------------------
@@ -464,6 +443,7 @@ else
 fi
 
 ## Execute Script ---------------------------
+apply_hypr
 apply_wallpaper
 apply_alacritty
 apply_foot
@@ -474,4 +454,3 @@ apply_waybar
 apply_wlogout
 apply_wofi
 apply_hyprlock
-apply_hypr

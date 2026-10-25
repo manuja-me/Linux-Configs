@@ -558,6 +558,10 @@ EOF
         cp -pf "$SRC_DIR/misc/transmission-qt" "$USER_HOME/.local/bin/transmission-qt"
         chmod +x "$USER_HOME/.local/bin/transmission-qt"
     fi
+    if [[ -f "$SRC_DIR/misc/wal" ]]; then
+        cp -pf "$SRC_DIR/misc/wal" "$USER_HOME/.local/bin/wal"
+        chmod +x "$USER_HOME/.local/bin/wal"
+    fi
     [[ -d "$SRC_DIR/misc/geany" ]] && cp -rf "$SRC_DIR/misc/geany"/* "$CONFIG_DIR/geany/"
     [[ -d "$SRC_DIR/misc/ncmpcpp" ]] && cp -rf "$SRC_DIR/misc/ncmpcpp"/* "$CONFIG_DIR/ncmpcpp/"
     [[ -d "$SRC_DIR/misc/ranger" ]] && cp -rf "$SRC_DIR/misc/ranger"/* "$CONFIG_DIR/ranger/"
@@ -635,7 +639,7 @@ EOF
     # Ensure scripts are executable
     chmod +x "$CONFIG_DIR"/hypr/scripts/* "$CONFIG_DIR"/hyprcat/scripts/* \
         "$CONFIG_DIR"/hypr/theme/theme.sh "$CONFIG_DIR"/hyprcat/theme/theme.sh \
-        "$CONFIG_DIR"/hypr/waybar/lightmode || true
+        "$CONFIG_DIR"/hypr/waybar/lightmode "$CONFIG_DIR"/hypr/waybar/fps || true
 
     run_root chown -R "$TARGET_USER:$TARGET_USER" "$CONFIG_DIR" "$USER_HOME/Pictures" "$USER_HOME/boot-recovery" "$USER_HOME/.local" "$USER_HOME/.gemini" "$USER_HOME/.gtkrc-2.0" "$USER_HOME/.zshrc" "$USER_HOME/.zprofile" || true
 

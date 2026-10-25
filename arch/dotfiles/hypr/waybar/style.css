@@ -33,6 +33,18 @@ window#waybar.hidden {
 	padding: 2px 8px 2px 8px;
 }
 
+#custom-fps {
+    background-color: @background-alt1;
+    color: @cyan;
+    border-radius: 0px;
+    margin: 6px 6px 6px 0px;
+    padding: 2px 8px 2px 8px;
+}
+#custom-fps.active {
+    background-color: @cyan;
+    color: @background;
+}
+
 #custom-lightmode {
     background-color: @background-alt1;
 	color: @red;
@@ -304,7 +316,7 @@ window#waybar.hidden {
 
 /** ********** WLR Desktop ********** **/
 #workspaces {
-	background-color: @background;
+	background-color: transparent;
 	border-radius: 0px;
 	margin: 0px 6px;
 	padding: 0px;

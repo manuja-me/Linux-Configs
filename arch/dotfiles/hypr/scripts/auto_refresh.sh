@@ -26,8 +26,16 @@ set_refresh() {
     killall -SIGUSR2 waybar 2>/dev/null
 }
 
+apply_threshold() {
+    for b in /sys/class/power_supply/BAT*/charge_control_end_threshold; do
+        [[ -f "$b" ]] && echo 80 > "$b" 2>/dev/null || true
+    done
+}
+
+apply_threshold
 set_refresh
 
 udevadm monitor --subsystem-match=power_supply --udev | while read -r _; do
+    apply_threshold
     set_refresh
 done

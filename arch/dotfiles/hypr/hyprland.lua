@@ -332,7 +332,7 @@ hl.config({
         font_family = "JetBrainsMono Nerd Font",
         splash_font_family = "JetBrainsMono Nerd Font",
         force_default_wallpaper = 0,
-        vrr = 0,
+        vrr = 1,
         mouse_move_enables_dpms = false,
         key_press_enables_dpms = false,
         name_vk_after_proc = true,
@@ -418,6 +418,10 @@ hl.config({
         smart_resizing = true,
         drop_at_cursor = true,
         always_keep_position = false,
+    },
+
+    debug = {
+        overlay = false,
     },
 })
 

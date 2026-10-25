@@ -1,4 +1,3 @@
-
 [Default Applications]
 video/webm=mpv.desktop
 application/pdf=org.pwmt.zathura.desktop
@@ -14,3 +13,6 @@ application/x-extension-html=firefox.desktop
 application/x-extension-shtml=firefox.desktop
 application/x-extension-xhtml=firefox.desktop
 application/x-extension-xht=firefox.desktop
+x-scheme-handler/opencode=ai.opencode.desktop.desktop
+
+[Added Associations]

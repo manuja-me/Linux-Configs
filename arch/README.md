@@ -373,16 +373,22 @@ The rice includes a master theme engine in `~/.config/hypr/theme/theme.sh` that 
 > [!TIP]
 > You can also click the **palette / sun icon** on the right side of the Waybar status bar to switch themes with one click!
 
-### 2. Multi-Monitor & Resolution Setup
+### 2. Multi-Monitor, Refresh Rate & FPS Control
 Edit [20-monitor.conf](file:///home/user/.config/hypr/config.d/20-monitor.conf):
 ```ini
-# Syntax: monitor = name, resolution@refresh, position, scale
-monitor = , preferred, auto, 1
+# Internal laptop display (1080p @ 144Hz)
+monitor = eDP-1, 1920x1080@144, 0x0, 1
 
-# Examples:
-# monitor = DP-1, 2560x1440@144, 0x0, 1
-# monitor = HDMI-A-1, 1920x1080@60, 2560x0, 1
+# Mirror any connected external display (TV / HDMI / DP) to eDP-1
+monitor = , preferred, auto, 1, mirror, eDP-1
 ```
+
+> [!TIP]
+> **Waybar FPS & Refresh Rate Widget (`custom/fps`)**:
+> - **Left-Click**: Toggle 60Hz ⟷ 144Hz instantly.
+> - **Right-Click**: Toggle on-screen debug FPS overlay (`debug:overlay`).
+> - **Scroll Up / Down**: Quick switch to 144Hz or 60Hz.
+> - **Battery Health**: `auto_refresh.sh` monitors power supply state and enforces an 80% charge threshold (`charge_control_end_threshold`) to prolong battery longevity.
 
 ### 3. Touchpad Gestures & Keyboard Layout
 Edit [04-input.conf](file:///home/user/.config/hypr/config.d/04-input.conf) and [05-gestures.conf](file:///home/user/.config/hypr/config.d/05-gestures.conf):

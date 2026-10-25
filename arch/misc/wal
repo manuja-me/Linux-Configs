@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+/usr/bin/wal "$@"
+exit_code=$?
+
+if [[ -f "$HOME/.cache/wal/colors.sh" ]]; then
+    source "$HOME/.cache/wal/colors.sh"
+    accent="${color4:-$color5}"
+    altbackground="$(pastel color "$background" | pastel lighten 0.10 | pastel format hex 2>/dev/null || echo "#303030")"
+    modbackground=($(pastel gradient -n 3 "$background" "$altbackground" | pastel format hex 2>/dev/null || echo "$background #2a323b #353f4a"))
+
+    c_accent="${accent#\#}"
+    c_color1="${color1#\#}"
+    c_mod1="${modbackground[1]#\#}"
+    c_mod2="${modbackground[2]#\#}"
+    c_bg="${background#\#}"
+    c_fg="${foreground#\#}"
+
+    cat > "$HOME/.config/hypr/theme/hyprtheme.lua" <<- _EOF_
+return {
+    active_border_1 = "0xFF${c_accent}",
+    active_border_2 = "0xFF${c_color1}",
+    inactive_border_1 = "0xFF${c_mod1}",
+    inactive_border_2 = "0xFF${c_mod2}",
+    nogroup_border = "0xFF${c_mod2}",
+    nogroup_border_active = "0xFF${c_accent}",
+    group_border_active = "0xFF${c_accent}",
+    group_border_inactive = "0xFF${c_mod1}",
+    group_border_locked_active = "0xFF${c_color1}",
+    group_border_locked_inactive = "0xFF${c_mod1}",
+    groupbar_text_active = "0xFF${c_bg}",
+    groupbar_text_inactive = "0xFF${c_fg}",
+}
+_EOF_
+
+    hyprctl eval "hl.config({ general = { col = { active_border = { colors = {\"0xFF${c_accent}\", \"0xFF${c_color1}\"}, angle = 45 }, inactive_border = { colors = {\"0xFF${c_mod1}\", \"0xFF${c_mod2}\"}, angle = 45 }, nogroup_border = \"0xFF${c_mod2}\", nogroup_border_active = \"0xFF${c_accent}\" } }, group = { col = { border_active = \"0xFF${c_accent}\", border_inactive = \"0xFF${c_mod1}\", border_locked_active = \"0xFF${c_color1}\", border_locked_inactive = \"0xFF${c_mod1}\" }, groupbar = { text_color = \"0xFF${c_bg}\", text_color_inactive = \"0xFF${c_fg}\", text_color_locked_active = \"0xFF${c_bg}\", text_color_locked_inactive = \"0xFF${c_fg}\", col = { active = \"0xFF${c_accent}\", inactive = \"0xFF${c_mod1}\", locked_active = \"0xFF${c_color1}\", locked_inactive = \"0xFF${c_mod1}\" } } } })" &>/dev/null || true
+fi
+
+exit $exit_code

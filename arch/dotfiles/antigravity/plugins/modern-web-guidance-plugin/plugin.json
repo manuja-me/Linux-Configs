@@ -1,7 +1,6 @@
 {
   "name": "modern-web-guidance-plugin",
   "displayName": "Modern Web Guidance",
-  "version": "0.0.194",
   "description": "Keep your coding agent up to date with the latest web best practices.",
   "logo": "assets/logo.svg",
   "suggestedPrompts": [
@@ -23,5 +22,6 @@
     "javascript",
     "chrome-extensions",
     "best-practices"
-  ]
+  ],
+  "version": "0.0.195"
 }
