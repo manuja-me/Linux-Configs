@@ -572,14 +572,19 @@ EOF
         cp -rf "$SRC_DIR/dotfiles/wallpapers"/. "$USER_HOME/Pictures/wallpapers/"
     fi
 
-    # Deploy bundled Antigravity custom skills & plugins
-    if [[ -d "$SRC_DIR/dotfiles/antigravity/skills" ]]; then
-        mkdir -p "$USER_HOME/.gemini/config/skills"
-        cp -rf "$SRC_DIR/dotfiles/antigravity/skills"/. "$USER_HOME/.gemini/config/skills/"
-    fi
-    if [[ -d "$SRC_DIR/dotfiles/antigravity/plugins" ]]; then
-        mkdir -p "$USER_HOME/.gemini/config/plugins"
-        cp -rf "$SRC_DIR/dotfiles/antigravity/plugins"/. "$USER_HOME/.gemini/config/plugins/"
+    # Deploy Antigravity skills & plugins in one go
+    if [[ -f "$SRC_DIR/setup-skills.sh" ]]; then
+        chmod +x "$SRC_DIR/setup-skills.sh"
+        run_as_user bash "$SRC_DIR/setup-skills.sh" || true
+    else
+        if [[ -d "$SRC_DIR/dotfiles/antigravity/skills" ]]; then
+            mkdir -p "$USER_HOME/.gemini/config/skills"
+            cp -rf "$SRC_DIR/dotfiles/antigravity/skills"/. "$USER_HOME/.gemini/config/skills/"
+        fi
+        if [[ -d "$SRC_DIR/dotfiles/antigravity/plugins" ]]; then
+            mkdir -p "$USER_HOME/.gemini/config/plugins"
+            cp -rf "$SRC_DIR/dotfiles/antigravity/plugins"/. "$USER_HOME/.gemini/config/plugins/"
+        fi
     fi
 
     # Environment variables

@@ -99,7 +99,7 @@ else
 fi
 ok "Repository ready at ${CLONE_DIR}."
 
-chmod -v +x "${CLONE_DIR}/arch/install.sh" "${CLONE_DIR}/arch/restore.sh" "${CLONE_DIR}/arch/setup-antigravity.sh" "${CLONE_DIR}/arch/sync-from-live.sh"
+chmod -v +x "${CLONE_DIR}/arch/install.sh" "${CLONE_DIR}/arch/restore.sh" "${CLONE_DIR}/arch/setup-antigravity.sh" "${CLONE_DIR}/arch/setup-skills.sh" "${CLONE_DIR}/arch/sync-from-live.sh"
 
 # 6. Hand off to interactive installer with /dev/tty attached for stdin
 set +x

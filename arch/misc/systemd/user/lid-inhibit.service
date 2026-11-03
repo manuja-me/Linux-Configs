@@ -1,0 +1,10 @@
+[Unit]
+Description=Inhibit logind lid switch handling
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/systemd-inhibit --what=handle-lid-switch --who="Hyprland" --why="Prevent sleep/lock on lid close" /usr/bin/sleep infinity
+Restart=always
+
+[Install]
+WantedBy=default.target

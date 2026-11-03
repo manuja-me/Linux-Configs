@@ -488,6 +488,7 @@ All custom skills and plugins currently active on this Linux Antigravity setup a
 
 | Plugin Name | Version | Bundled Skills & Rules | Purpose |
 | :--- | :--- | :--- | :--- |
+| **`andrej-karpathy-skills`** (`Andrej Karpathy Guidelines`) | `1.0.0` | **Skill**: `karpathy-guidelines`<br>**Rules**: `.cursor/rules/karpathy-guidelines.mdc` | Behavioral guidelines to reduce common LLM coding pitfalls, derived from Andrej Karpathy's findings (`https://github.com/multica-ai/andrej-karpathy-skills`). |
 | **`chisle`** (`Chisle Token Optimizer`) | `3.5.0` | **Rules**: `AGENTS.md`, `GEMINI.md`<br>**Skills**: `chisle`, `chisle-audit`, `chisle-help`, `chisle-review` | Always-on token efficiency rules and Chisle slash skills. |
 | **`chrome-devtools-plugin`** (`Chrome DevTools`) | `0.21.0` | **Skills**:<br>• `chrome-devtools` (browser automation & inspection)<br>• `a11y-debugging` (accessibility auditing)<br>• `debug-optimize-lcp` (Core Web Vitals & LCP)<br>• `memory-leak-debugging` (heap snapshots & memlab)<br>• `troubleshooting` (MCP target recovery) | Full Chrome DevTools MCP integration and web performance/accessibility debugging suite. |
 | **`modern-web-guidance-plugin`** (`Modern Web Guidance`) | `1.0.6` | **Skills**:<br>• `modern-web-guidance` (modern HTML/CSS/JS APIs, View Transitions, `:has()`, Popover, Anchor Positioning)<br>• `chrome-extensions` (Manifest V3 extension engineering & Web Store publishing) | Up-to-date modern web platform and Chrome Extension MV3 guidance. |
@@ -504,13 +505,12 @@ Automatically provided by the Antigravity IDE/CLI runtime:
 - `ui-extension`: Build and debug side-pane UI extensions using the Node.js Sidecar SDK.
 - `ui-plugin-navigation`: Surface one-click pills in chat to toggle UI plugin panels.
 
-### Manual Skill & Plugin Restore Command
-If you ever want to restore all custom skills and plugins manually without running the full installer:
+### ⚡ 1-Click Skill & Plugin Install (In One Go)
+To install or update all Antigravity skills and plugins in one single command:
 ```bash
-mkdir -p ~/.gemini/config/skills ~/.gemini/config/plugins
-cp -rf ~/nixos-config/arch/dotfiles/antigravity/skills/* ~/.gemini/config/skills/
-cp -rf ~/nixos-config/arch/dotfiles/antigravity/plugins/* ~/.gemini/config/plugins/
+~/nixos-config/arch/setup-skills.sh
 ```
+👉 See [SKILLS.md](SKILLS.md) for the full directory, licensing, triggers, and upstream repository links.
 
 ---
 

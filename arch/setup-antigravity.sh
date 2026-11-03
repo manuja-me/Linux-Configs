@@ -100,32 +100,22 @@ Use claude-mem's MCP search tools for manual memory queries.
 EOF
 
 # -----------------------------------------------------------------------------
-# 5. Task Observer Skill Installation
+# 5. Antigravity Skills & Plugins Installation (In One Go)
 # -----------------------------------------------------------------------------
-echo "==> [5/7] Installing task-observer skill..."
-SKILLS_DIR="$USER_HOME/.gemini/config/skills"
-mkdir -p "$SKILLS_DIR"
-
-if [ ! -d "$SKILLS_DIR/task-observer/.git" ]; then
-    git clone https://github.com/rebelytics/one-skill-to-rule-them-all.git "$SKILLS_DIR/task-observer"
+echo "==> [5/7] Installing all Antigravity skills & plugins..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "$SCRIPT_DIR/setup-skills.sh" ]]; then
+    chmod +x "$SCRIPT_DIR/setup-skills.sh"
+    bash "$SCRIPT_DIR/setup-skills.sh"
 else
-    echo "Updating existing task-observer repository..."
-    git -C "$SKILLS_DIR/task-observer" pull --rebase || true
-fi
-
-# Initialize observations directory
-OBS_DIR="$USER_HOME/.gemini/skill-observations"
-mkdir -p "$OBS_DIR/observation-log/archive"
-if [ ! -f "$OBS_DIR/last-review-date.txt" ]; then
-    echo "never" > "$OBS_DIR/last-review-date.txt"
-fi
-
-if [ ! -f "$OBS_DIR/cross-cutting-principles.md" ]; then
-    cat << 'EOF' > "$OBS_DIR/cross-cutting-principles.md"
-# Cross-Cutting Principles
-
-Principles that apply across all skills and workflows.
-EOF
+    SKILLS_DIR="$USER_HOME/.gemini/config/skills"
+    mkdir -p "$SKILLS_DIR"
+    if [ ! -d "$SKILLS_DIR/task-observer/.git" ]; then
+        git clone https://github.com/rebelytics/one-skill-to-rule-them-all.git "$SKILLS_DIR/task-observer"
+    else
+        echo "Updating existing task-observer repository..."
+        git -C "$SKILLS_DIR/task-observer" pull --rebase || true
+    fi
 fi
 
 # -----------------------------------------------------------------------------
@@ -304,10 +294,19 @@ EOF
 cat << 'EOF' > "$USER_HOME/.gemini/config/config.json"
 {
   "plugins": {
+    "andrej-karpathy-skills": {
+      "enabled": true
+    },
+    "chisle": {
+      "enabled": true
+    },
     "chrome-devtools-plugin": {
       "enabled": true
     },
     "google-antigravity-sdk": {
+      "enabled": true
+    },
+    "i-have-adhd": {
       "enabled": true
     },
     "modern-web-guidance-plugin": {

@@ -273,7 +273,7 @@
         "format-linked": "{ifname} (No IP)",
         "format-disconnected": "Disconnected",
         "format-disabled": "Disabled",
-        "format-alt": " {bandwidthUpBits} |  {bandwidthDownBits}",
+        "format-alt": " {bandwidthUpBytes} |  {bandwidthDownBytes}",
         "tooltip-format": " {ifname} via {gwaddr}",
         "on-click": "~/.config/hypr/scripts/rofi_network",
     },

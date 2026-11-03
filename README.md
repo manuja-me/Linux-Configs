@@ -32,6 +32,8 @@ A multi-distribution configuration repository containing declarative system conf
 │   ├── restore.sh            # Interactive Snapshot Rollback & "Clean Arch Slate" Reset
 │   ├── sync-from-live.sh     # Sync live machine changes back into this repository
 │   ├── setup-antigravity.sh  # 1-Click Google Antigravity & AI Agent Setup
+│   ├── setup-skills.sh       # 1-Click Install all Antigravity skills & plugins in one go
+│   ├── SKILLS.md             # Complete directory of Antigravity skills, triggers & licenses
 │   └── README.md             # Complete step-by-step installation, SSH setup & skills inventory
 │
 ├── nixos/                    # NixOS Flakes & Home Manager Declarative Configurations
@@ -96,12 +98,19 @@ Emergency EFI/GRUB recovery script for UEFI dual-boot setups (Arch + Windows NVM
 ---
 
 ### 🤖 [Google Antigravity Setup & Skills Inventory (`arch/setup-antigravity.sh`)](arch/README.md#-complete-antigravity-skills--plugins-inventory)
-1-click environment setup replicating the Google Antigravity developer workspace, including `claude-mem` MCP & lifecycle hooks, `headroom` context compression layer, `task-observer` continuous learning skill, `specify-cli`, and all 14 standalone skills + 4 plugins backed up in `arch/dotfiles/antigravity/`.
+1-click environment setup replicating the Google Antigravity developer workspace, including `claude-mem` MCP & lifecycle hooks, `headroom` context compression layer, `task-observer` continuous learning skill, `specify-cli`, and all custom skills + plugins backed up in `arch/dotfiles/antigravity/`.
 
+**Full Antigravity environment setup:**
 ```bash
 cd ~/nixos-config/arch
 ./setup-antigravity.sh
 ```
+
+**Install or update all Antigravity skills & plugins in one go:**
+```bash
+~/nixos-config/arch/setup-skills.sh
+```
+👉 See [arch/SKILLS.md](arch/SKILLS.md) for the complete skills directory, triggers, licensing, and upstream sources.
 
 ---
 

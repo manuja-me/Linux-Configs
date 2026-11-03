@@ -663,7 +663,7 @@ hl.bind("SUPER + Control_R", hl.dsp.window.drag(), { mouse = true })
 hl.bind("SUPER + ALT_R", hl.dsp.window.resize(), { mouse = true })
 
 -- Switches
-hl.bind("switch:Lid Switch", hl.dsp.exec_cmd("hyprlock"), { locked = true })
-hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprctl keyword monitor 'eDP-1, disable'"), { locked = true })
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl eval 'hl.monitor({ output = \"eDP-1\", mode = \"preferred\", position = \"auto\", scale = 1.0 })'; " .. scripts .. "/statusbar --reload"), { locked = true })
+-- hl.bind("switch:Lid Switch", hl.dsp.exec_cmd("hyprlock"), { locked = true })
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprctl dispatch dpms off eDP-1"), { locked = true })
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl dispatch dpms on eDP-1"), { locked = true })
 
